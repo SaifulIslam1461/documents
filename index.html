@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DocuStudio Pro - Masnoon Dua & Canva Editor</title>
+    <title>DocuStudio Pro - Resizable Canva & Document Editor</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,7 +20,7 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts for Bengali & Arabic (Amiri, Kalpurush, Hind Siliguri) -->
+    <!-- Google Fonts for Bengali & Arabic -->
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Kalpurush&family=Scheherazade+New:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
     
     <style>
@@ -61,10 +61,29 @@
             touch-action: none;
             user-select: none;
             z-index: 20;
+            min-width: 40px;
+            min-height: 40px;
+            resize: both;
+            overflow: visible;
         }
 
         .draggable-item.active {
             outline: 2px dashed #16a34a;
+        }
+
+        /* Resize Handle Styling */
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: #16a34a;
+            border: 2px solid white;
+            bottom: -5px;
+            right: -5px;
+            border-radius: 50%;
+            cursor: se-resize;
+            touch-action: none;
+            z-index: 30;
         }
 
         table {
@@ -80,7 +99,6 @@
             overflow: auto;
         }
 
-        /* High Precision Clean Print Styles for Perfect PDF Export */
         @media print {
             body * { visibility: hidden; }
             #documentCanvas, #documentCanvas * { visibility: visible; }
@@ -94,7 +112,7 @@
                 padding: 15mm !important;
                 margin: 0 !important;
             }
-            .no-print, button, .draggable-item button, .draggable-item input[type="color"] {
+            .no-print, button, .draggable-item button, .draggable-item input[type="color"], .resize-handle {
                 display: none !important;
             }
             .draggable-item {
@@ -187,13 +205,19 @@
                 <i class="fa-solid fa-font text-brand-500"></i> <span>টেক্সট বক্স</span>
             </button>
             <button onclick="addDraggableShape('rect')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
-                <i class="fa-solid fa-square text-blue-500"></i> <span>বক্স</span>
+                <i class="fa-solid fa-square text-blue-500"></i> <span>সাধারণ বক্স</span>
+            </button>
+            <button onclick="addDraggableShape('rounded')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+                <i class="fa-solid fa-square-plus text-emerald-500"></i> <span>কার্ভড বক্স</span>
             </button>
             <button onclick="addDraggableShape('circle')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
                 <i class="fa-solid fa-circle text-amber-500"></i> <span>বৃত্ত</span>
             </button>
+            <button onclick="addDraggableShape('dashed')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+                <i class="fa-solid fa-border-top-left text-purple-500"></i> <span>ড্যাশড বর্ডার</span>
+            </button>
             <label class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm cursor-pointer active:scale-95">
-                <i class="fa-solid fa-image text-emerald-500"></i> <span>ছবি আপলোড</span>
+                <i class="fa-solid fa-image text-rose-500"></i> <span>ছবি আপলোড</span>
                 <input type="file" accept="image/*" onchange="uploadImage(event)" class="hidden">
             </label>
         </div>
@@ -227,7 +251,7 @@
         <div id="documentCanvas" class="a4-page p-6 sm:p-12 rounded-xl text-slate-800 transition-all duration-300 shadow-xl my-2">
             
             <div class="text-xs text-slate-400 mb-6 pb-2 border-b border-dashed border-slate-200 flex justify-between items-center" contenteditable="true" spellcheck="false">
-                <span>জামেয়া রশীদিয়া, লস্করহাট, ফেনী</span>
+                <span>জამეয়া রশীদিয়া, লস্করহাট, ফেনী[span_0](start_span)[span_0](end_span)</span>
                 <span class="font-semibold">মাসনূন দো'আ ও সুন্নাত</span>
             </div>
 
@@ -236,19 +260,19 @@
                 <p class="font-amiri text-2xl text-emerald-700 text-center py-2" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
                 
                 <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 my-3">
-                    <h3 class="font-bold text-emerald-800">১. ইস্তেগফার (৩ বার)[span_2](start_span)[span_2](end_span)</h3>
+                    <h3 class="font-bold text-emerald-800">১. ইস্তেগফার (৩ বার)[span_1](start_span)[span_1](end_span)</h3>
                     <p class="font-amiri text-xl text-right my-1" dir="rtl">أَسْتَغْفِرُ اللَّهَ</p>
                 </div>
 
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 my-3">
-                    <h3 class="font-bold text-slate-800">নামাজের সুন্নাত সমূহ[span_3](start_span)[span_3](end_span)</h3>
-                    <p class="text-sm mt-1">দাঁড়ানোর মধ্যে ৩টি সুন্নাত: (১) উভয় পায়ের মাঝখানে চার বা ছয় আঙ্গুল পরিমাণ ফাঁক রাখা। (২) সোজা হইয়া দাঁড়ানো। (৩) ইকামতের সময় উভয় হাতকে ছেড়ে দেওয়া[span_4](start_span)[span_4](end_span)。</p>
+                    <h3 class="font-bold text-slate-800">নামাজের সুন্নাত সমূহ[span_2](start_span)[span_2](end_span)</h3>
+                    <p class="text-sm mt-1">দাঁড়ানোর মধ্যে ৩টি সুন্নাত: (১) উভয় পায়ের মাঝখানে চার বা ছয় আঙ্গুল পরিমাণ ফাঁক রাখা। (২) সোজা হইয়া দাঁড়ানো। (৩) ইকামতের সময় উভয় হাতকে ছেড়ে দেওয়া[span_3](start_span)[span_3](end_span)。</p>
                 </div>
             </div>
 
             <div class="mt-12 pt-4 border-t border-dashed border-slate-200 flex justify-between items-center text-xs text-slate-400">
                 <span>পৃষ্ঠা ১</span>
-                <span>কপি বিন্যাস: মোহা. সাইফুল ইসলাম তারেক, ফেনী[span_5](start_span)[span_5](end_span)[span_6](start_span)[span_6](end_span)</span>
+                <span>কপি বিন্যাস: মোহা. সাইফুল ইসলাম তারেক, ফেনী[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span)</span>
             </div>
 
             <!-- CANVAS DRAGGABLE LAYER -->
@@ -262,8 +286,8 @@
             <button onclick="addDraggableText(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
                 <i class="fa-solid fa-font text-brand-500 w-5"></i> <span>টেক্সট বক্স</span>
             </button>
-            <button onclick="addDraggableShape('rect'); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
-                <i class="fa-solid fa-square text-blue-500 w-5"></i> <span>বক্স শেপ</span>
+            <button onclick="addDraggableShape('rounded'); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
+                <i class="fa-solid fa-square-plus text-emerald-500 w-5"></i> <span>কার্ভড বক্স</span>
             </button>
             <button onclick="createCustomTable(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
                 <i class="fa-solid fa-table text-purple-500 w-5"></i> <span>নতুন টেবিল</span>
@@ -285,35 +309,9 @@
                 <button onclick="newDocument(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file text-brand-500 w-5"></i> <span>নতুন ডকুমেন্ট</span>
                 </button>
-                <button onclick="openTemplateModal(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
-                    <i class="fa-solid fa-layer-group text-emerald-500 w-5"></i> <span>মাসনূন দোয়া টেমপ্লেট</span>
-                </button>
                 <button onclick="triggerPrintPdf(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file-pdf text-red-500 w-5"></i> <span>PDF এক্সপোর্ট</span>
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TEMPLATES MODAL -->
-    <div id="templateModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-slate-700">
-                <h3 class="font-bold text-base flex items-center space-x-2">
-                    <i class="fa-solid fa-layer-group text-brand-500"></i>
-                    <span>ইসলামিক টেমপ্লেট নির্বাচন</span>
-                </h3>
-                <button onclick="closeTemplateModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto space-y-3">
-                <div onclick="loadMasnoonTemplate()" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">মাসনূন দো'আ ও জিকির সমূহ</h4>
-                    <p class="text-xs text-slate-500 mt-1">ইস্তেগফার, জিকির, দরুদ ও দোয়ার সম্পূর্ণ সংকলন[span_7](start_span)[span_7](end_span)।</p>
-                </div>
-                <div onclick="loadSunnahTemplate()" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">নামাজের সুন্নাত সমূহ</h4>
-                    <p class="text-xs text-slate-500 mt-1">দাঁড়ানো, রুকু, সিজদা ও বসার সুন্নাতসমূহ[span_8](start_span)[span_8](end_span)।</p>
-                </div>
             </div>
         </div>
     </div>
@@ -338,8 +336,6 @@
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function openMenuModal() { document.getElementById('menuModal').classList.remove('hidden'); }
         function closeMenuModal() { document.getElementById('menuModal').classList.add('hidden'); }
-        function openTemplateModal() { document.getElementById('templateModal').classList.remove('hidden'); }
-        function closeTemplateModal() { document.getElementById('templateModal').classList.add('hidden'); }
 
         function formatText(cmd) { document.execCommand(cmd, false, null); }
         function applyFontFamily(font) { document.getElementById('mainEditorArea').className = `outline-none min-h-[420px] text-base leading-relaxed space-y-4 pt-2 ${font}`; }
@@ -350,15 +346,15 @@
             ed.style.textAlign = dir === 'rtl' ? 'right' : 'left';
         }
 
-        // DRAGGABLE ENGINE (CANVA STYLE)
+        // ADVANCED RESIZABLE & DRAGGABLE ENGINE
         let activeElement = null;
 
-        function makeElementDraggable(el) {
+        function makeElementDraggableAndResizable(el) {
             el.style.pointerEvents = 'auto';
             let initialX = 0, initialY = 0;
 
             function dragStart(e) {
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.classList.contains('resize-handle')) return;
                 activeElement = el;
                 document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
                 el.classList.add('active');
@@ -396,37 +392,85 @@
 
             el.addEventListener('mousedown', dragStart);
             el.addEventListener('touchstart', dragStart, { passive: false });
+
+            // RESIZE HANDLE LOGIC
+            const resizeHandle = el.querySelector('.resize-handle');
+            if(resizeHandle) {
+                let startW = 0, startH = 0, startX = 0, startY = 0;
+
+                function resizeStart(e) {
+                    e.stopPropagation();
+                    startW = parseInt(document.defaultView.getComputedStyle(el).width, 10);
+                    startH = parseInt(document.defaultView.getComputedStyle(el).height, 10);
+                    startX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+                    startY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+                    document.addEventListener('mousemove', resizeMove);
+                    document.addEventListener('mouseup', resizeEnd);
+                    document.addEventListener('touchmove', resizeMove, { passive: false });
+                    document.addEventListener('touchend', resizeEnd);
+                }
+
+                function resizeMove(e) {
+                    e.preventDefault();
+                    let curX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+                    let curY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+                    el.style.width = (startW + curX - startX) + 'px';
+                    el.style.height = (startH + curY - startY) + 'px';
+                }
+
+                function resizeEnd() {
+                    document.removeEventListener('mousemove', resizeMove);
+                    document.removeEventListener('mouseup', resizeEnd);
+                    document.removeEventListener('touchmove', resizeMove);
+                    document.removeEventListener('touchend', resizeEnd);
+                }
+
+                resizeHandle.addEventListener('mousedown', resizeStart);
+                resizeHandle.addEventListener('touchstart', resizeStart, { passive: false });
+            }
         }
 
         function addDraggableText() {
             const layer = document.getElementById('canvasElementsLayer');
             const wrap = document.createElement('div');
-            wrap.className = 'draggable-item p-2 bg-white/90 border border-brand-500 rounded-lg shadow-md flex items-center space-x-1';
-            wrap.style.left = '40px'; wrap.style.top = '140px';
+            wrap.className = 'draggable-item p-2 bg-white/90 border border-brand-500 rounded-lg shadow-md flex items-center justify-between space-x-1';
+            wrap.style.left = '40px'; wrap.style.top = '140px'; wrap.style.width = '140px';
             
             wrap.innerHTML = `
-                <div contenteditable="true" class="outline-none px-2 py-1 text-sm font-bold min-w-[80px]">নতুন টেক্সট বক্স</div>
-                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1 no-print">✕</button>
+                <div contenteditable="true" class="outline-none px-1 py-1 text-sm font-bold w-full">নতুন টেক্সট</div>
+                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1 no-print shrink-0">✕</button>
+                <div class="resize-handle no-print"></div>
             `;
             layer.appendChild(wrap);
-            makeElementDraggable(wrap);
+            makeElementDraggableAndResizable(wrap);
         }
 
         function addDraggableShape(type) {
             const layer = document.getElementById('canvasElementsLayer');
             const wrap = document.createElement('div');
-            wrap.className = 'draggable-item p-1 flex flex-col items-center justify-center shadow-lg';
-            wrap.style.left = '50px'; wrap.style.top = '200px';
+            wrap.className = 'draggable-item p-1 flex flex-col items-center justify-center shadow-md relative';
+            wrap.style.left = '50px'; wrap.style.top = '180px';
+            wrap.style.width = '130px'; wrap.style.height = '90px';
             
             if(type === 'rect') {
-                wrap.style.width = '120px'; wrap.style.height = '80px';
                 wrap.style.backgroundColor = '#dcfce7';
-                wrap.style.border = '1px solid #16a34a';
-                wrap.style.borderRadius = '8px';
+                wrap.style.border = '2px solid #16a34a';
+                wrap.style.borderRadius = '4px';
+            } else if(type === 'rounded') {
+                wrap.style.backgroundColor = '#e0f2fe';
+                wrap.style.border = '2px solid #0284c7';
+                wrap.style.borderRadius = '16px';
             } else if(type === 'circle') {
-                wrap.style.width = '90px'; wrap.style.height = '90px';
+                wrap.style.width = '100px'; wrap.style.height = '100px';
                 wrap.style.backgroundColor = '#fef08a';
+                wrap.style.border = '2px solid #ca8a04';
                 wrap.style.borderRadius = '50%';
+            } else if(type === 'dashed') {
+                wrap.style.backgroundColor = '#f3e8ff';
+                wrap.style.border = '2px dashed #9333ea';
+                wrap.style.borderRadius = '8px';
             }
 
             wrap.innerHTML = `
@@ -434,9 +478,10 @@
                     <input type="color" onchange="this.parentElement.parentElement.style.backgroundColor=this.value" class="w-5 h-5 rounded-full cursor-pointer border-none">
                     <button onclick="this.parentElement.parentElement.remove()" class="w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold">✕</button>
                 </div>
+                <div class="resize-handle no-print"></div>
             `;
             layer.appendChild(wrap);
-            makeElementDraggable(wrap);
+            makeElementDraggableAndResizable(wrap);
         }
 
         function uploadImage(e) {
@@ -448,19 +493,21 @@
                 const wrap = document.createElement('div');
                 wrap.className = 'draggable-item';
                 wrap.style.left = '60px'; wrap.style.top = '220px';
+                wrap.style.width = '120px'; wrap.style.height = '120px';
                 wrap.innerHTML = `
-                    <div class="relative group">
-                        <img src="${evt.target.result}" class="w-28 h-28 object-cover rounded-lg shadow-md">
+                    <div class="relative w-full h-full group">
+                        <img src="${evt.target.result}" class="w-full h-full object-cover rounded-lg shadow-md">
                         <button onclick="this.parentElement.parentElement.remove()" class="absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold no-print">✕</button>
+                        <div class="resize-handle no-print"></div>
                     </div>
                 `;
                 layer.appendChild(wrap);
-                makeElementDraggable(wrap);
+                makeElementDraggableAndResizable(wrap);
             };
             reader.readAsDataURL(file);
         }
 
-        // TABLE SYSTEM
+        // TABLE ENGINE
         let selectedTable = null;
 
         document.getElementById('mainEditorArea').addEventListener('click', function(e) {
@@ -524,40 +571,6 @@
             for(let i=0; i<rows.length; i++) {
                 rows[i].deleteCell(-1);
             }
-        }
-
-        // TEMPLATE LOADERS
-        function loadMasnoonTemplate() {
-            closeTemplateModal();
-            document.getElementById('docTitleInput').value = "মাসনূন দো'আ ও জিকির";
-            document.getElementById('mainEditorArea').innerHTML = `
-                <h1 class="text-2xl font-bold text-center text-emerald-800">الأدعية المسنونة - মাসনূন দো'আ সমূহ</h1>
-                <p class="text-center text-slate-500 mb-4">জামেয়া রশীদিয়া, লস্করহাট, ফেনী[span_9](start_span)[span_9](end_span)</p>
-                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 my-2">
-                    <h3 class="font-bold text-emerald-900">১. ইস্তেগফার (৩ বার)[span_10](start_span)[span_10](end_span)</h3>
-                    <p class="font-amiri text-xl text-right my-1" dir="rtl">أَسْتَغْفِرُ اللَّهَ</p>
-                </div>
-                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 my-2">
-                    <h3 class="font-bold text-emerald-900">২. জিকির[span_11](start_span)[span_11](end_span)</h3>
-                    <p class="font-amiri text-xl text-right my-1" dir="rtl">لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ</p>
-                </div>
-            `;
-        }
-
-        function loadSunnahTemplate() {
-            closeTemplateModal();
-            document.getElementById('docTitleInput').value = "নামাজের সুন্নাত সমূহ";
-            document.getElementById('mainEditorArea').innerHTML = `
-                <h1 class="text-2xl font-bold text-center text-blue-800">আমাদের প্রিয় নবী হযরত মুহাম্মদ (সাঃ) এর নামাজের সুন্নাত সমূহ[span_12](start_span)[span_12](end_span)</h1>
-                <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 my-2">
-                    <h3 class="font-bold text-blue-900">দাঁড়ানোর মধ্যে ৩টি সুন্নাত:[span_13](start_span)[span_13](end_span)</h3>
-                    <ul class="list-disc list-inside text-sm space-y-1 mt-1">
-                        <li>উভয় পায়ের মাঝখানে চার বা ছয় আঙ্গুল পরিমাণ ফাঁক রাখা[span_14](start_span)[span_14](end_span)।</li>
-                        <li>সোজা হইয়া দাঁড়ানো[span_15](start_span)[span_15](end_span)।</li>
-                        <li>ইকামতের সময় উভয় হাতকে ছেড়ে দেওয়া[span_16](start_span)[span_16](end_span)।</li>
-                    </ul>
-                </div>
-            `;
         }
 
         // PERFECT PDF PRINT ENGINE
