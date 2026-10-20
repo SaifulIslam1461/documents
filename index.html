@@ -1,1 +1,1299 @@
+```html
+<!DOCTYPE html>
+<html lang="bn" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuStudio - Word & Canva Style Document Editor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0284c7', 600: '#0369a1', 700: '#075985' }
+                    }
+                }
+            }
+        }
+    </script>
 
+    <!-- Google Fonts for Bengali, Arabic & English -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Kalpurush&family=Noto+Naskh+Arabic:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,400&family=Roboto:wght@300;400;500;700&family=Scheherazade+New:wght@400;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome & Lucide Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- HTML2PDF Library for export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* CSS Variables & Core Styles */
+        :root {
+            --page-width: 210mm;
+            --page-height: 297mm;
+        }
+
+        body {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        /* Dark mode page container adjust */
+        .dark body { background-color: #0f172a; }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .dark ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Page Preview Simulation & Mobile Responsiveness */
+        .page-canvas {
+            width: var(--page-width);
+            max-width: 100%;
+            min-height: var(--page-height);
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            margin: 10px auto;
+            position: relative;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            color: #0f172a;
+            page-break-after: always;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .page-canvas {
+                padding: 15mm 10mm !important;
+                margin: 5px auto;
+                min-height: auto;
+            }
+        }
+
+        /* Printable Area */
+        .page-content {
+            min-height: 100%;
+            outline: none;
+            word-wrap: break-word;
+        }
+
+        /* Font Classes */
+        .font-kalpurush { font-family: 'Kalpurush', 'Hind Siliguri', sans-serif; }
+        .font-hind { font-family: 'Hind Siliguri', sans-serif; }
+        .font-tiro { font-family: 'Tiro Bangla', serif; }
+        .font-amiri { font-family: 'Amiri', serif; direction: rtl; unicode-bidi: isolate; }
+        .font-scheherazade { font-family: 'Scheherazade New', serif; direction: rtl; unicode-bidi: isolate; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+
+        /* Canvas Elements Overlay */
+        .canvas-element {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            border: 1px transparent dotted;
+        }
+        .canvas-element.selected {
+            border: 1.5px dashed #0284c7 !important;
+        }
+        .resize-handle {
+            width: 16px;
+            height: 16px;
+            background: #0284c7;
+            border: 2px solid #ffffff;
+            position: absolute;
+            border-radius: 50%;
+            display: none;
+            touch-action: none;
+        }
+        .canvas-element.selected .resize-handle {
+            display: block;
+        }
+        .resize-nw { top: -8px; left: -8px; cursor: nwse-resize; }
+        .resize-ne { top: -8px; right: -8px; cursor: nesw-resize; }
+        .resize-sw { bottom: -8px; left: -8px; cursor: nesw-resize; }
+        .resize-se { bottom: -8px; right: -8px; cursor: nwse-resize; }
+
+        /* Multi Column Support */
+        .columns-1 { column-count: 1; }
+        .columns-2 { column-count: 2; column-gap: 20px; }
+        .columns-3 { column-count: 3; column-gap: 15px; }
+
+        /* Ruler Simulation */
+        .ruler-h {
+            background-image: linear-gradient(90deg, #cbd5e1 1px, transparent 0);
+            background-size: 10mm 100%;
+        }
+
+        /* Rich Text Table Styling inside document */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .doc-table td, .doc-table th {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            min-width: 30px;
+        }
+        .doc-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* RTL Helper */
+        [dir="rtl"] { text-align: right; }
+
+        /* Print Override */
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            .page-canvas {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800 dark:text-slate-100">
+
+    <!-- TOP HEADER / NAVBAR -->
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex items-center justify-between no-print z-30">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-md">
+                D
+            </div>
+            <div>
+                <input id="docTitle" type="text" value="নতুন নথিপত্র - DocuStudio" class="bg-transparent font-semibold text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-sky-500 rounded px-1 text-xs md:text-base border-none outline-none w-36 sm:w-auto">
+                <div class="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                    <span id="saveStatus" class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden sm:inline">সংরক্ষণে প্রস্তুত</span>
+                    </span>
+                    <span>•</span>
+                    <span id="wordCountBadge">০ শব্দ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Center Header -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Theme Toggle -->
+            <button onclick="toggleDarkMode()" title="Dark/Light Mode" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline"></i>
+            </button>
+
+            <!-- Undo / Redo -->
+            <div class="hidden md:flex border-r border-slate-200 dark:border-slate-700 pr-2 gap-1">
+                <button onclick="execCmd('undo')" title="Undo (Ctrl+Z)" class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"><i class="fa-solid fa-rotate-left"></i></button>
+                <button onclick="execCmd('redo')" title="Redo (Ctrl+Y)" class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"><i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+
+            <!-- Templates Modal Trigger -->
+            <button onclick="openTemplatesModal()" class="px-2 py-1.5 sm:px-3 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-medium hover:bg-indigo-100 flex items-center gap-1 transition">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span class="hidden sm:inline">টেমপ্লেট</span>
+            </button>
+
+            <!-- Export / Save Dropdown -->
+            <button onclick="saveProjectJSON()" class="p-2 sm:px-3 sm:py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1">
+                <i class="fa-solid fa-download"></i>
+                <span class="hidden sm:inline">সেভ (JSON)</span>
+            </button>
+
+            <!-- Export PDF Button -->
+            <button onclick="openPdfModal()" class="px-2.5 py-1.5 sm:px-4 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1 transition">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span>PDF</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE TOOLBAR (WORD + CANVA SWITCHABLE) -->
+    <div class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 no-print">
+        <!-- Main Tabs -->
+        <div class="flex border-b border-slate-200 dark:border-slate-700 px-2 sm:px-4 text-xs sm:text-sm font-medium gap-3 sm:gap-4 text-slate-600 dark:text-slate-400 overflow-x-auto whitespace-nowrap">
+            <button onclick="switchTab('home')" id="tab-home" class="py-2 border-b-2 border-sky-600 text-sky-600 dark:text-sky-400 font-semibold flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-file-lines"></i> হোম
+            </button>
+            <button onclick="switchTab('insert')" id="tab-insert" class="py-2 border-b-2 border-transparent hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-shapes"></i> ক্যানভাস & টুলস
+            </button>
+            <button onclick="switchTab('layout')" id="tab-layout" class="py-2 border-b-2 border-transparent hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-pager"></i> পেজ লেআউট
+            </button>
+            <button onclick="switchTab('tools')" id="tab-tools" class="py-2 border-b-2 border-transparent hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-toolbox"></i> বিশেষ প্রতীক
+            </button>
+        </div>
+
+        <!-- TOOLBAR PANELS -->
+        <div id="toolbar-panels" class="p-2 px-3 sm:px-4 flex items-center gap-2 overflow-x-auto text-slate-700 dark:text-slate-200 text-xs sm:text-sm whitespace-nowrap">
+                <i class="fa-solid fa-toolbox"></i> বিশেষ টুলস & প্রতীক
+            </button>
+        </div>
+
+        <!-- TOOLBAR PANELS -->
+        <div id="toolbar-panels" class="p-2 px-4 flex items-center gap-3 overflow-x-auto text-slate-700 dark:text-slate-200 text-sm">
+            
+            <!-- PANEL 1: HOME / RICH TEXT -->
+            <div id="panel-home" class="flex items-center gap-2 flex-wrap">
+                <!-- Font Select -->
+                <select id="fontSelector" onchange="execCmd('fontName', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs md:text-sm focus:ring-1 focus:ring-sky-500">
+                    <optgroup label="বাংলা ফন্ট (Bengali)">
+                        <option value="'Hind Siliguri', sans-serif">Hind Siliguri (ডিফল্ট)</option>
+                        <option value="'Kalpurush', sans-serif">Kalpurush (কালপুরুষ)</option>
+                        <option value="'Tiro Bangla', serif">Tiro Bangla (তিরো বাংলা)</option>
+                    </optgroup>
+                    <optgroup label="আরবি ফন্ট (Arabic RTL)">
+                        <option value="'Amiri', serif">Amiri (আমিরি - আরবি)</option>
+                        <option value="'Scheherazade New', serif">Scheherazade (শেহেরযাদে)</option>
+                        <option value="'Noto Naskh Arabic', serif">Noto Naskh Arabic</option>
+                    </optgroup>
+                    <optgroup label="English Fonts">
+                        <option value="'Inter', sans-serif">Inter (Modern)</option>
+                        <option value="'Playfair Display', serif">Playfair Display</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                    </optgroup>
+                </select>
+
+                <!-- Font Size -->
+                <select onchange="changeFontSize(this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs md:text-sm">
+                    <option value="12px">12 px</option>
+                    <option value="14px">14 px</option>
+                    <option value="16px" selected>16 px</option>
+                    <option value="18px">18 px</option>
+                    <option value="20px">20 px</option>
+                    <option value="24px">24 px</option>
+                    <option value="32px">32 px</option>
+                    <option value="48px">48 px</option>
+                </select>
+
+                <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+                <!-- Text Styles -->
+                <button onclick="execCmd('bold')" title="Bold" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold"><i class="fa-solid fa-bold"></i></button>
+                <button onclick="execCmd('italic')" title="Italic" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded italic"><i class="fa-solid fa-italic"></i></button>
+                <button onclick="execCmd('underline')" title="Underline" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded underline"><i class="fa-solid fa-underline"></i></button>
+                <button onclick="execCmd('strikeThrough')" title="Strikethrough" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded line-through"><i class="fa-solid fa-strikethrough"></i></button>
+
+                <!-- Colors -->
+                <div class="flex items-center gap-1 border border-slate-200 dark:border-slate-700 rounded px-1 bg-white dark:bg-slate-900">
+                    <i class="fa-solid fa-palette text-sky-600 text-xs"></i>
+                    <input type="color" onchange="execCmd('foreColor', this.value)" title="Text Color" class="w-6 h-6 border-none cursor-pointer bg-transparent">
+                </div>
+                <div class="flex items-center gap-1 border border-slate-200 dark:border-slate-700 rounded px-1 bg-white dark:bg-slate-900">
+                    <i class="fa-solid fa-highlighter text-amber-500 text-xs"></i>
+                    <input type="color" value="#fef08a" onchange="execCmd('hiliteColor', this.value)" title="Highlight Color" class="w-6 h-6 border-none cursor-pointer bg-transparent">
+                </div>
+
+                <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+                <!-- Alignment & Text Direction -->
+                <button onclick="execCmd('justifyLeft')" title="Left Align" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-align-left"></i></button>
+                <button onclick="execCmd('justifyCenter')" title="Center Align" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-align-center"></i></button>
+                <button onclick="execCmd('justifyRight')" title="Right Align" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-align-right"></i></button>
+                <button onclick="execCmd('justifyFull')" title="Justify" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-align-justify"></i></button>
+
+                <!-- RTL/LTR Toggle -->
+                <button onclick="setRTL()" title="আরবি/ডান-থেকে-বাম (RTL)" class="px-2 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 rounded font-bold text-xs flex items-center gap-1">
+                    <i class="fa-solid fa-right-to-left-text-direction"></i> RTL
+                </button>
+                <button onclick="setLTR()" title="বাংলা/বাম-থেকে-ডান (LTR)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded font-bold text-xs flex items-center gap-1">
+                    <i class="fa-solid fa-left-to-right-text-direction"></i> LTR
+                </button>
+
+                <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+                <!-- Lists -->
+                <button onclick="execCmd('insertUnorderedList')" title="Bullet List" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-list-ul"></i></button>
+                <button onclick="execCmd('insertOrderedList')" title="Numbered List" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-solid fa-list-ol"></i></button>
+                <button onclick="insertChecklist()" title="Checklist" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"><i class="fa-regular fa-square-check"></i></button>
+            </div>
+
+            <!-- PANEL 2: INSERT & CANVA FLOATING DESIGN ELEMENTS -->
+            <div id="panel-insert" class="hidden flex items-center gap-2 flex-wrap">
+                <!-- Add Textbox -->
+                <button onclick="addCanvasText()" class="px-3 py-1 bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 rounded hover:bg-sky-200 text-xs font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-font"></i> টেক্সট বক্স
+                </button>
+
+                <!-- Add Shapes -->
+                <div class="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-1">
+                    <span class="text-xs font-semibold px-1 text-slate-500">শেপ:</span>
+                    <button onclick="addCanvasShape('rectangle')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded" title="Rectangle"><i class="fa-regular fa-square"></i></button>
+                    <button onclick="addCanvasShape('circle')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded" title="Circle"><i class="fa-regular fa-circle"></i></button>
+                    <button onclick="addCanvasShape('arrow')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded" title="Arrow"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="addCanvasShape('badge')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-amber-500" title="Islamic Badge"><i class="fa-solid fa-certificate"></i></button>
+                    <button onclick="addCanvasShape('quote')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-indigo-500" title="Quote Box"><i class="fa-solid fa-quote-left"></i></button>
+                </div>
+
+                <!-- Image Upload -->
+                <label class="px-3 py-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 rounded hover:bg-indigo-200 text-xs font-semibold cursor-pointer flex items-center gap-1">
+                    <i class="fa-regular fa-image"></i> ছবি/লোগো যোগ করুন
+                    <input type="file" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
+                </label>
+
+                <!-- Table Insert -->
+                <button onclick="insertTable()" class="px-3 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 rounded hover:bg-emerald-200 text-xs font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-table"></i> টেবিল
+                </button>
+
+                <div class="h-5 w-px bg-slate-300 dark:bg-slate-600 mx-1"></div>
+
+                <!-- Layer Controls for Selected Canva Element -->
+                <div class="flex items-center gap-1 text-xs">
+                    <span class="text-slate-500 font-medium">উপাদান স্তর:</span>
+                    <button onclick="layerSelectedElement('up')" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300" title="Bring Forward"><i class="fa-solid fa-layer-group"></i> উপরে</button>
+                    <button onclick="layerSelectedElement('down')" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300" title="Send Backward"><i class="fa-solid fa-down-long"></i> নিচে</button>
+                    <button onclick="deleteSelectedCanvasElement()" class="px-2 py-1 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 rounded hover:bg-rose-200" title="Delete Element"><i class="fa-solid fa-trash"></i> ডিলিট</button>
+                </div>
+            </div>
+
+            <!-- PANEL 3: PAGE LAYOUT & DESIGN -->
+            <div id="panel-layout" class="hidden flex items-center gap-3 flex-wrap">
+                <!-- Page Size -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">সাইজ:</span>
+                    <select onchange="changePageSize(this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs">
+                        <option value="A4">A4 (210 × 297mm)</option>
+                        <option value="A5">A5 (148 × 210mm)</option>
+                        <option value="Letter">Letter (8.5 × 11in)</option>
+                    </select>
+                </div>
+
+                <!-- Orientation -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">দিক:</span>
+                    <button onclick="setOrientation('portrait')" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-semibold hover:bg-sky-100">পোর্ট্রেট</button>
+                    <button onclick="setOrientation('landscape')" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-semibold hover:bg-sky-100">ল্যান্ডস্কেপ</button>
+                </div>
+
+                <!-- Margins -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">মার্জিন:</span>
+                    <select onchange="changeMargins(this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs">
+                        <option value="normal">স্বাভাবিক (25mm)</option>
+                        <option value="narrow">সংকীর্ণ (12mm)</option>
+                        <option value="wide">প্রশস্ত (35mm)</option>
+                    </select>
+                </div>
+
+                <!-- Columns -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">কলাম:</span>
+                    <button onclick="setColumns(1)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-semibold">১ কলাম</button>
+                    <button onclick="setColumns(2)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-semibold">২ কলাম</button>
+                    <button onclick="setColumns(3)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs font-semibold">৩ কলাম</button>
+                </div>
+
+                <!-- Page Background Color -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">পৃষ্ঠার রঙ:</span>
+                    <input type="color" value="#ffffff" onchange="changePageBgColor(this.value)" class="w-6 h-6 border-none cursor-pointer bg-transparent">
+                </div>
+
+                <!-- Page Border Style -->
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-semibold text-slate-500">বর্ডার:</span>
+                    <select onchange="changePageBorder(this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs">
+                        <option value="none">বর্ডার নেই</option>
+                        <option value="solid 2px #0284c7">সরল ব্লু বর্ডার</option>
+                        <option value="double 4px #0284c7">ডাবল বর্ডার</option>
+                        <option value="dashed 2px #64748b">ড্যাশড বর্ডার</option>
+                        <option value="golden">ইসলামিক গোল্ডেন বর্ডার</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- PANEL 4: TOOLS, SYMBOLS & FIND/REPLACE -->
+            <div id="panel-tools" class="hidden flex items-center gap-3 flex-wrap">
+                <!-- Find and Replace Modal Trigger -->
+                <button onclick="toggleFindReplaceModal()" class="px-3 py-1 bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 rounded text-xs font-semibold hover:bg-amber-200 flex items-center gap-1">
+                    <i class="fa-solid fa-magnifying-glass font-bold"></i> খোঁজা ও পরিবর্তন (Find & Replace)
+                </button>
+
+                <!-- Islamic Diacritics & Symbols Fast Inserter -->
+                <div class="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-1 text-xs">
+                    <span class="text-slate-500 font-semibold px-1">আরবি হরকত:</span>
+                    <button onclick="insertTextAtCursor('َ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="জবর">َ</button>
+                    <button onclick="insertTextAtCursor('ِ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="জের">ِ</button>
+                    <button onclick="insertTextAtCursor('ُ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="পেশ">ُ</button>
+                    <button onclick="insertTextAtCursor('ً')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="দুই জবর">ً</button>
+                    <button onclick="insertTextAtCursor('ٍ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="দুই জের">ٍ</button>
+                    <button onclick="insertTextAtCursor('ٌ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="দুই পেশ">ٌ</button>
+                    <button onclick="insertTextAtCursor('ْ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="জজম">ْ</button>
+                    <button onclick="insertTextAtCursor('ّ')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="তাশদীদ">ّ</button>
+                    <button onclick="insertTextAtCursor('﷽')" class="px-2 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded font-amiri" title="বিসমিল্লাহ">﷽</button>
+                    <button onclick="insertTextAtCursor('ﷺ')" class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded font-amiri" title="সাল্লাল্লাহু আলাইহি ওয়াসাল্লাম">ﷺ</button>
+                    <button onclick="insertTextAtCursor('۝')" class="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-amiri text-base" title="আয়াত চিহ্ন">۝</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MAIN EDITOR CANVAS CONTAINER AREA -->
+    <div class="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-slate-200/70 dark:bg-slate-950/80 relative" id="workspaceContainer">
+        
+        <!-- PAGES HOLDER -->
+        <div id="pagesContainer" class="flex flex-col items-center gap-6 pb-20 w-full max-w-5xl">
+            
+            <!-- PAGE 1 (DEFAULT INITIAL PAGE) -->
+            <div id="page-1" class="page-canvas p-[25mm] rounded shadow-xl relative transition-all" onclick="selectPage(1)">
+                <!-- Header Area -->
+                <div class="border-b border-slate-200 dark:border-slate-300 pb-2 mb-4 text-xs text-slate-400 flex justify-between items-center no-print-border" contenteditable="true" spellcheck="false">
+                    <span>ডকুমেন্ট হেডার (এখানে লিখুন)</span>
+                    <span class="font-semibold text-slate-500">DocuStudio Paper</span>
+                </div>
+
+                <!-- Rich Main Editable Body -->
+                <div id="editor-body-1" class="page-content font-hind text-base outline-none leading-relaxed min-h-[700px]" contenteditable="true" spellcheck="false" oninput="handleDocumentChange()">
+                    <h1 class="text-2xl md:text-3xl font-bold text-center text-slate-800 mb-4 font-tiro">
+                        বিসমিল্লাহির রহমানির রহিম
+                    </h1>
+                    <p class="text-center font-amiri text-2xl text-emerald-800 mb-6" dir="rtl">
+                        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    </p>
+                    <p class="mb-3">
+                        স্বাগতম <strong>DocuStudio Modern Editor</strong>-এ! এটি একটি সম্পূর্ণ ও আধুনিক ডকুমেন্ট এডিটিং এবং ক্যানভাস ডিজাইনিং সিস্টেম। এখানে আপনি খুব সহজেই বাংলা, আরবি এবং ইংরেজি ভাষায় যেকোনো অফিশিয়াল নথি, বইয়ের পৃষ্ঠা, পরীক্ষার প্রশ্নপত্র এবং ইসলামিক পোস্টার সাজাতে পারবেন।
+                    </p>
+                    <div class="bg-sky-50 border-l-4 border-sky-600 p-4 rounded my-4 text-sm text-sky-900">
+                        <strong>💡 টিপস:</strong> ওপরের <em>"ইনসার্ট ও ক্যানভাস"</em> ট্যাব ব্যবহার করে টেক্সট বক্স, শেপ, বা লোগো যোগ করতে পারেন এবং যেকোনো জায়গায় টেনে (Drag & Drop) বসাতে পারেন।
+                    </div>
+                </div>
+
+                <!-- Footer Area -->
+                <div class="absolute bottom-6 left-[25mm] right-[25mm] border-t border-slate-200 pt-2 text-xs text-slate-400 flex justify-between items-center">
+                    <span contenteditable="true">সর্বস্বত্ব সংরক্ষিত © DocuStudio</span>
+                    <span class="page-number-label">পৃষ্ঠা ১</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Floating Page Add Toolbar -->
+        <div class="fixed bottom-12 right-4 sm:bottom-6 sm:right-6 flex flex-col gap-2 no-print z-20">
+            <button onclick="addNewPage()" class="w-10 h-10 sm:w-12 sm:h-12 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg flex items-center justify-center text-lg sm:text-xl transition active:scale-95" title="নতুন পৃষ্ঠা যোগ করুন">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <button onclick="removeLastPage()" class="w-8 h-8 sm:w-10 sm:h-10 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md flex items-center justify-center text-xs sm:text-sm transition active:scale-95" title="সর্বশেষ পৃষ্ঠা মুছে ফেলুন">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER STATUS BAR -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 py-1.5 flex items-center justify-between text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 no-print">
+        <div class="flex items-center gap-2 sm:gap-4">
+            <span id="pageCountStat"><i class="fa-regular fa-file-lines"></i> পৃষ্ঠা: ১</span>
+            <span id="charCountStat" class="hidden sm:inline"><i class="fa-solid fa-font"></i> অক্ষর: ০</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-emerald-600 font-semibold text-[10px] sm:text-xs"><i class="fa-solid fa-circle text-[6px] animate-pulse"></i> অটো-সেভ</span>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: TEMPLATES SELECTOR -->
+    <div id="templatesModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i> তৈরি টেমপ্লেট নির্বাচন করুন
+                </h3>
+                <button onclick="closeTemplatesModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                <!-- Template 1 -->
+                <div onclick="loadTemplate('masnoonDua')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-emerald-600 text-2xl mb-2"><i class="fa-solid fa-book-quran"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">মাসনূন দোয়া ও ইসলামিক বই</h4>
+                    <p class="text-xs text-slate-500 mt-1">দুই কলামের সুন্দর আরবি পাঠ ও বাংলা অর্থসহ ইসলামিক বই লেআউট।</p>
+                </div>
+
+                <!-- Template 2 -->
+                <div onclick="loadTemplate('questionPaper')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-sky-600 text-2xl mb-2"><i class="fa-solid fa-file-pen"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">মাদ্রাসার পরীক্ষার প্রশ্নপত্র</h4>
+                    <p class="text-xs text-slate-500 mt-1">মাদ্রাসা ও স্কুলের প্রাতিষ্ঠানিক পরীক্ষার প্রশ্নপত্রের নিখুঁত ফরম্যাট।</p>
+                </div>
+
+                <!-- Template 3 -->
+                <div onclick="loadTemplate('examRoutine')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-indigo-600 text-2xl mb-2"><i class="fa-solid fa-table-cells"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">পরীক্ষার রুটিন</h4>
+                    <p class="text-xs text-slate-500 mt-1">সুন্দর টেবিল সাজানো সময়সূচি ও নির্দেশাবলী সহ।</p>
+                </div>
+
+                <!-- Template 4 -->
+                <div onclick="loadTemplate('officialNotice')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-amber-600 text-2xl mb-2"><i class="fa-solid fa-bullhorn"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">জরুরি নোটিশ ও বিজ্ঞপ্তি</h4>
+                    <p class="text-xs text-slate-500 mt-1">অফিসিয়াল স্মারক নম্বর, তারিখ ও স্বাক্ষরসহ চিঠি বা নোটিশ।</p>
+                </div>
+
+                <!-- Template 5 -->
+                <div onclick="loadTemplate('sunnahChecklist')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-teal-600 text-2xl mb-2"><i class="fa-solid fa-list-check"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">নামাজের সুন্নাহর আমল তালিকা</h4>
+                    <p class="text-xs text-slate-500 mt-1">দৈনন্দিন আমল ও সুন্নাতের প্রস্তুত ইন্টারঅ্যাক্টিভ চেকলিস্ট।</p>
+                </div>
+
+                <!-- Template 6 -->
+                <div onclick="loadTemplate('islamicPoster')" class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-sky-500 cursor-pointer transition bg-slate-50 dark:bg-slate-800 hover:shadow-md">
+                    <div class="text-rose-600 text-2xl mb-2"><i class="fa-solid fa-palette"></i></div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">ইসলামিক পোস্টার / বইয়ের কভার</h4>
+                    <p class="text-xs text-slate-500 mt-1">বর্ডার, শেপ ও ক্যানভাস গ্রাফিক্স ডিজাইন সম্বলিত পোস্টার।</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PDF PRINT & EXPORT PREVIEW -->
+    <div id="pdfModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-600"></i> PDF প্রাকদর্শন ও ডাউনলোড
+                </h3>
+                <button onclick="closePdfModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="p-4 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-lg text-sm text-sky-900 dark:text-sky-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i> আপনার ডকুমেন্টের সকল বাংলা ও আরবি ফন্ট, ক্যানভাস শেপ ও লেআউট নিখুঁতভাবে PDF এ রূপান্তরিত হবে।
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">পৃষ্ঠার ব্যাপ্তি (Page Range):</label>
+                    <select id="pdfPageRange" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm">
+                        <option value="all">সকল পৃষ্ঠা ডাউনলোড করুন</option>
+                        <option value="1">শুধু পৃষ্ঠা ১</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="pdfHighQuality" checked class="rounded text-sky-600">
+                    <label for="pdfHighQuality" class="text-sm">উচ্চ মানের টেক্সট ও ভেক্টর রেন্ডারিং (Searchable Text)</label>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                <button onclick="closePdfModal()" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium">বাতিল</button>
+                <button onclick="generateAndDownloadPDF()" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow">
+                    <i class="fa-solid fa-download"></i> ডাউনলোড PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: FIND & REPLACE -->
+    <div id="findReplaceModal" class="fixed bottom-12 right-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-4 w-80 z-40 hidden no-print">
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-magnifying-glass text-sky-600"></i> খোঁজা ও স্থানচ্যুতি</h4>
+            <button onclick="toggleFindReplaceModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-2 text-xs">
+            <input id="findInput" type="text" placeholder="কী খুঁজতে চান?" class="w-full border border-slate-300 dark:border-slate-700 rounded p-2 bg-transparent">
+            <input id="replaceInput" type="text" placeholder="কী দিয়ে পরিবর্তন করবেন?" class="w-full border border-slate-300 dark:border-slate-700 rounded p-2 bg-transparent">
+            <div class="flex gap-2 pt-1">
+                <button onclick="performFindReplace()" class="flex-1 bg-sky-600 text-white py-1.5 rounded font-medium hover:bg-sky-700">সব পরিবর্তন করুন</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC & ENGINE -->
+    <script>
+        // GLOBAL APP STATE
+        let pageCount = 1;
+        let activePageId = 1;
+        let activeCanvasElement = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            updatePageStats();
+            setupAutoSave();
+            loadAutoSavedData();
+
+            // Click outside to deselect canvas elements
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.canvas-element') && !e.target.closest('#panel-insert')) {
+                    deselectCanvasElements();
+                }
+            });
+        });
+
+        // TAB SWITCHER
+        function switchTab(tabName) {
+            ['home', 'insert', 'layout', 'tools'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (t === tabName) {
+                    btn.classList.add('border-sky-600', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+                    btn.classList.remove('border-transparent');
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('border-sky-600', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+                    btn.classList.add('border-transparent');
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        // DARK MODE TOGGLE
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // RICH TEXT EXEC COMMANDS
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            updatePageStats();
+        }
+
+        function changeFontSize(size) {
+            const selection = window.getSelection();
+            if (selection.rangeCount) {
+                const span = document.createElement('span');
+                span.style.fontSize = size;
+                const range = selection.getRangeAt(0);
+                range.surroundContents(span);
+            }
+        }
+
+        function setRTL() {
+            const selection = window.getSelection();
+            if (selection.anchorNode) {
+                let parent = selection.anchorNode.parentElement;
+                while (parent && !parent.classList.contains('page-content')) {
+                    if (['P', 'DIV', 'H1', 'H2', 'H3', 'LI'].includes(parent.tagName)) {
+                        parent.setAttribute('dir', 'rtl');
+                        parent.style.textAlign = 'right';
+                        parent.style.fontFamily = "'Amiri', serif";
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+            }
+        }
+
+        function setLTR() {
+            const selection = window.getSelection();
+            if (selection.anchorNode) {
+                let parent = selection.anchorNode.parentElement;
+                while (parent && !parent.classList.contains('page-content')) {
+                    if (['P', 'DIV', 'H1', 'H2', 'H3', 'LI'].includes(parent.tagName)) {
+                        parent.removeAttribute('dir');
+                        parent.style.textAlign = 'left';
+                        parent.style.fontFamily = "'Hind Siliguri', sans-serif";
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+            }
+        }
+
+        function insertChecklist() {
+            const html = `<div class="flex items-center gap-2 my-1"><input type="checkbox" class="w-4 h-4 text-sky-600 rounded"><span contenteditable="true"> নতুন তালিকা আইটেম</span></div>`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function insertTextAtCursor(text) {
+            document.execCommand('insertText', false, text);
+        }
+
+        // PAGE MANAGEMENT SYSTEM
+        function selectPage(id) {
+            activePageId = id;
+        }
+
+        function addNewPage() {
+            pageCount++;
+            const container = document.getElementById('pagesContainer');
+            const pageDiv = document.createElement('div');
+            pageDiv.id = `page-${pageCount}`;
+            pageDiv.className = 'page-canvas p-[25mm] rounded shadow-xl relative transition-all';
+            pageDiv.onclick = () => selectPage(pageCount);
+
+            pageDiv.innerHTML = `
+                <div class="border-b border-slate-200 dark:border-slate-300 pb-2 mb-4 text-xs text-slate-400 flex justify-between items-center" contenteditable="true" spellcheck="false">
+                    <span>ডকুমেন্ট হেডার</span>
+                    <span class="font-semibold text-slate-500">DocuStudio Paper</span>
+                </div>
+                <div id="editor-body-${pageCount}" class="page-content font-hind text-base outline-none leading-relaxed min-h-[700px]" contenteditable="true" spellcheck="false" oninput="handleDocumentChange()">
+                    <p><br></p>
+                </div>
+                <div class="absolute bottom-6 left-[25mm] right-[25mm] border-t border-slate-200 pt-2 text-xs text-slate-400 flex justify-between items-center">
+                    <span contenteditable="true">সর্বস্বত্ব সংরক্ষিত © DocuStudio</span>
+                    <span class="page-number-label">পৃষ্ঠা ${pageCount}</span>
+                </div>
+            `;
+
+            container.appendChild(pageDiv);
+            updatePageStats();
+            updatePageRangeOptions();
+        }
+
+        function removeLastPage() {
+            if (pageCount > 1) {
+                const page = document.getElementById(`page-${pageCount}`);
+                if (page) page.remove();
+                pageCount--;
+                updatePageStats();
+                updatePageRangeOptions();
+            }
+        }
+
+        function updatePageStats() {
+            document.getElementById('pageCountStat').innerText = `মোট পৃষ্ঠা: ${pageCount}`;
+            
+            // Count words & chars across all page contents
+            let totalText = '';
+            for (let i = 1; i <= pageCount; i++) {
+                const el = document.getElementById(`editor-body-${i}`);
+                if (el) totalText += ' ' + el.innerText;
+            }
+
+            const cleanText = totalText.trim();
+            const words = cleanText ? cleanText.split(/\s+/).length : 0;
+            const chars = cleanText.length;
+            const minutes = Math.max(1, Math.ceil(words / 180));
+
+            document.getElementById('wordCountBadge').innerText = `${words} শব্দ`;
+            document.getElementById('charCountStat').innerText = `অক্ষর: ${chars}`;
+            document.getElementById('readingTimeStat').innerText = `পড়ার সময়: ~${minutes} মি.`;
+        }
+
+        // CANVA FLOATING ELEMENTS SYSTEM
+        function addCanvasText() {
+            const page = document.getElementById(`page-${activePageId}`) || document.getElementById('page-1');
+            const elem = document.createElement('div');
+            elem.className = 'canvas-element selected border border-sky-500 p-2 rounded bg-white/90 shadow-md min-w-[120px]';
+            elem.style.left = '100px';
+            elem.style.top = '150px';
+            elem.style.zIndex = '10';
+
+            elem.innerHTML = `
+                <div class="content outline-none text-slate-800 font-hind" contenteditable="true">নতুন টেক্সট বক্স</div>
+                <div class="resize-handle resize-se"></div>
+            `;
+
+            makeElementDraggableAndResizable(elem);
+            page.appendChild(elem);
+            selectCanvasElement(elem);
+        }
+
+        function addCanvasShape(type) {
+            const page = document.getElementById(`page-${activePageId}`) || document.getElementById('page-1');
+            const elem = document.createElement('div');
+            elem.className = 'canvas-element selected flex items-center justify-center p-2';
+            elem.style.left = '150px';
+            elem.style.top = '200px';
+            elem.style.zIndex = '10';
+
+            if (type === 'rectangle') {
+                elem.innerHTML = `<div class="w-32 h-20 bg-sky-500/20 border-2 border-sky-600 rounded"></div>`;
+            } else if (type === 'circle') {
+                elem.innerHTML = `<div class="w-24 h-24 bg-indigo-500/20 border-2 border-indigo-600 rounded-full"></div>`;
+            } else if (type === 'arrow') {
+                elem.innerHTML = `<div class="text-3xl text-sky-600"><i class="fa-solid fa-arrow-right-long"></i></div>`;
+            } else if (type === 'badge') {
+                elem.innerHTML = `<div class="text-5xl text-amber-500"><i class="fa-solid fa-certificate"></i></div>`;
+            } else if (type === 'quote') {
+                elem.innerHTML = `<div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded italic text-sm text-amber-900 font-tiro">"আপনার গুরুত্বপূর্ণ বার্তা বা ইসলামিক বাণী এখানে লিখুন"</div>`;
+            }
+
+            elem.innerHTML += `<div class="resize-handle resize-se"></div>`;
+            makeElementDraggableAndResizable(elem);
+            page.appendChild(elem);
+            selectCanvasElement(elem);
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const page = document.getElementById(`page-${activePageId}`) || document.getElementById('page-1');
+                const elem = document.createElement('div');
+                elem.className = 'canvas-element selected';
+                elem.style.left = '100px';
+                elem.style.top = '100px';
+                elem.style.zIndex = '10';
+
+                elem.innerHTML = `
+                    <img src="${evt.target.result}" class="max-w-[200px] h-auto rounded shadow-sm pointer-events-none">
+                    <div class="resize-handle resize-se"></div>
+                `;
+
+                makeElementDraggableAndResizable(elem);
+                page.appendChild(elem);
+                selectCanvasElement(elem);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function makeElementDraggableAndResizable(elem) {
+            // Mouse Dragging
+            elem.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('content')) return;
+                selectCanvasElement(elem);
+                isDragging = true;
+                activeCanvasElement = elem;
+                dragOffset.x = e.clientX - elem.offsetLeft;
+                dragOffset.y = e.clientY - elem.offsetTop;
+            });
+
+            // Touch Dragging for Mobile
+            elem.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('content')) return;
+                selectCanvasElement(elem);
+                isDragging = true;
+                activeCanvasElement = elem;
+                const touch = e.touches[0];
+                dragOffset.x = touch.clientX - elem.offsetLeft;
+                dragOffset.y = touch.clientY - elem.offsetTop;
+            }, { passive: true });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && activeCanvasElement === elem) {
+                    elem.style.left = `${e.clientX - dragOffset.x}px`;
+                    elem.style.top = `${e.clientY - dragOffset.y}px`;
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging && activeCanvasElement === elem) {
+                    const touch = e.touches[0];
+                    elem.style.left = `${touch.clientX - dragOffset.x}px`;
+                    elem.style.top = `${touch.clientY - dragOffset.y}px`;
+                }
+            }, { passive: true });
+
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            document.addEventListener('touchend', () => { isDragging = false; });
+        }
+
+        function selectCanvasElement(elem) {
+            deselectCanvasElements();
+            elem.classList.add('selected');
+            activeCanvasElement = elem;
+        }
+
+        function deselectCanvasElements() {
+            document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
+            activeCanvasElement = null;
+        }
+
+        function layerSelectedElement(dir) {
+            if (!activeCanvasElement) return;
+            let currentZ = parseInt(activeCanvasElement.style.zIndex || 10);
+            activeCanvasElement.style.zIndex = dir === 'up' ? currentZ + 2 : Math.max(1, currentZ - 2);
+        }
+
+        function deleteSelectedCanvasElement() {
+            if (activeCanvasElement) {
+                activeCanvasElement.remove();
+                activeCanvasElement = null;
+            }
+        }
+
+        // PAGE LAYOUT ENGINE
+        function changePageSize(size) {
+            const pages = document.querySelectorAll('.page-canvas');
+            pages.forEach(p => {
+                if (size === 'A4') {
+                    p.style.setProperty('--page-width', '210mm');
+                    p.style.setProperty('--page-height', '297mm');
+                } else if (size === 'A5') {
+                    p.style.setProperty('--page-width', '148mm');
+                    p.style.setProperty('--page-height', '210mm');
+                } else if (size === 'Letter') {
+                    p.style.setProperty('--page-width', '215.9mm');
+                    p.style.setProperty('--page-height', '279.4mm');
+                }
+            });
+        }
+
+        function setOrientation(orient) {
+            const pages = document.querySelectorAll('.page-canvas');
+            pages.forEach(p => {
+                if (orient === 'landscape') {
+                    p.style.width = '297mm';
+                    p.style.minHeight = '210mm';
+                } else {
+                    p.style.width = '210mm';
+                    p.style.minHeight = '297mm';
+                }
+            });
+        }
+
+        function changeMargins(type) {
+            const pages = document.querySelectorAll('.page-canvas');
+            const val = type === 'narrow' ? '12mm' : type === 'wide' ? '35mm' : '25mm';
+            pages.forEach(p => p.style.padding = val);
+        }
+
+        function setColumns(count) {
+            const editors = document.querySelectorAll('.page-content');
+            editors.forEach(ed => {
+                ed.className = `page-content font-hind text-base outline-none leading-relaxed min-h-[700px] columns-${count}`;
+            });
+        }
+
+        function changePageBgColor(color) {
+            const pages = document.querySelectorAll('.page-canvas');
+            pages.forEach(p => p.style.backgroundColor = color);
+        }
+
+        function changePageBorder(borderStyle) {
+            const pages = document.querySelectorAll('.page-canvas');
+            pages.forEach(p => {
+                if (borderStyle === 'golden') {
+                    p.style.border = '8px double #d97706';
+                } else {
+                    p.style.border = borderStyle;
+                }
+            });
+        }
+
+        // INSERT TABLE
+        function insertTable() {
+            const html = `
+                <table class="doc-table">
+                    <thead>
+                        <tr><th>ক্রম</th><th>বিষয় / বিবরণ</th><th>পরিমাণ / মন্তব্য</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>১</td><td>প্রথম আইটেম</td><td>বিবরণ লিখুন</td></tr>
+                        <tr><td>২</td><td>দ্বিতীয় আইটেম</td><td>বিবরণ লিখুন</td></tr>
+                    </tbody>
+                </table>
+                <p><br></p>
+            `;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        // FIND AND REPLACE
+        function toggleFindReplaceModal() {
+            document.getElementById('findReplaceModal').classList.toggle('hidden');
+        }
+
+        function performFindReplace() {
+            const findText = document.getElementById('findInput').value;
+            const replaceText = document.getElementById('replaceInput').value;
+            if (!findText) return;
+
+            for (let i = 1; i <= pageCount; i++) {
+                const body = document.getElementById(`editor-body-${i}`);
+                if (body) {
+                    const regex = new RegExp(findText, 'g');
+                    body.innerHTML = body.innerHTML.replace(regex, replaceText);
+                }
+            }
+            alert(`'${findText}' সফলভাবে '${replaceText}' দিয়ে পরিবর্তন করা হয়েছে!`);
+            toggleFindReplaceModal();
+            updatePageStats();
+        }
+
+        // TEMPLATES SYSTEM
+        function openTemplatesModal() {
+            document.getElementById('templatesModal').classList.remove('hidden');
+        }
+        function closeTemplatesModal() {
+            document.getElementById('templatesModal').classList.add('hidden');
+        }
+
+        function loadTemplate(type) {
+            closeTemplatesModal();
+            const body1 = document.getElementById('editor-body-1');
+            document.getElementById('docTitle').value = getTemplateTitle(type);
+
+            if (type === 'masnoonDua') {
+                setColumns(2);
+                body1.innerHTML = `
+                    <h2 class="text-xl font-bold text-center text-emerald-800 font-tiro mb-4">দৈনন্দিন মাসনূন দোয়াসমূহ</h2>
+                    <div dir="rtl" class="font-amiri text-lg text-emerald-900 bg-emerald-50/50 p-2 rounded mb-2">
+                        الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ
+                    </div>
+                    <p class="text-sm font-hind mb-4"><strong>ঘুম থেকে ওঠার পর দোয়া:</strong> সকল প্রশংসা আল্লাহর জন্য যিনি আমাদের মৃত্যুর (ঘুমের) পর পুনরায় জীবিত করলেন।</p>
+                    <hr class="my-3">
+                    <div dir="rtl" class="font-amiri text-lg text-emerald-900 bg-emerald-50/50 p-2 rounded mb-2">
+                        بِسْمِ اللَّهِ وَلَجْنَا، وَبِسْمِ اللَّهِ خَرَجْنَا، وَعَلَى رَبِّنَا تَوَكَّلْنَا
+                    </div>
+                    <p class="text-sm font-hind"><strong>ঘরে প্রবেশের দোয়া:</strong> আল্লাহর নামে আমরা প্রবেশ করলাম এবং আল্লাহর নামে আমরা বের হলাম।</p>
+                `;
+            } else if (type === 'questionPaper') {
+                setColumns(1);
+                body1.innerHTML = `
+                    <div class="text-center font-tiro border-b-2 border-slate-800 pb-3 mb-4">
+                        <h2 class="text-2xl font-bold">দারুল উলুম মাদ্রাসা ও মডেল একাডেমি</h2>
+                        <h3 class="text-lg font-semibold">বার্ষিক পরীক্ষা - ২০২৬</h3>
+                        <p class="text-sm">শ্রেণি: পঞ্চম | বিষয়: আল-কুরআন ও তাজবীদ | সময়: ২ ঘণ্টা | পূর্ণমান: ১০০</p>
+                    </div>
+                    <p class="font-bold text-sm mb-2">১. নিচের প্রশ্নগুলোর সংক্ষেপে উত্তর দাও: (১০ × ২ = ২০)</p>
+                    <ol class="list-decimal pl-5 text-sm space-y-1 mb-4">
+                        <li>তাজবীদ কাকে বলে? গুন্নাহ কত প্রকার?</li>
+                        <li>ইখফা শব্দের অর্থ কী? ইখফার হরফ কয়টি?</li>
+                    </ol>
+                    <p class="font-bold text-sm mb-2">২. যেকোনো দুটি সুরার বাংলা অনুবাদ ও তাফসীর লিখুন: (২ × ১৫ = ৩০)</p>
+                `;
+            } else if (type === 'examRoutine') {
+                setColumns(1);
+                body1.innerHTML = `
+                    <h2 class="text-2xl font-bold text-center font-tiro text-slate-800 mb-2">পরীক্ষার চূড়ান্ত সময়সূচি - ২০২৬</h2>
+                    <p class="text-center text-xs text-slate-500 mb-4">সকল পরীক্ষার্থীদের যথাসময়ে উপস্থিত থাকার জন্য নির্দেশ দেওয়া যাচ্ছে।</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr class="bg-sky-100"><th>তারিখ & বার</th><th>বিষয়</th><th>সময়</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>১০ নভেম্বর, ২০২৬ (মঙ্গলবার)</td><td>আরবি প্রথম পত্র</td><td>সকাল ১০:০০ - ১:০০</td></tr>
+                            <tr><td>১২ নভেম্বর, ২০২৬ (বৃহস্পতিবার)</td><td>আল-কুরআন ও তাজবীদ</td><td>সকাল ১০:০০ - ১:০০</td></tr>
+                            <tr><td>১৫ নভেম্বর, ২০২৬ (রবিবার)</td><td>গণিত & ইংরেজি</td><td>সকাল ১০:০০ - ১:০০</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            } else if (type === 'officialNotice') {
+                setColumns(1);
+                body1.innerHTML = `
+                    <div class="flex justify-between text-xs text-slate-500 mb-6 border-b pb-2">
+                        <span>স্মারক নং: ডিএস/২০২৬/১০৮</span>
+                        <span>তারিখ: ২০ অক্টোবর, ২০২৬</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-center underline font-tiro mb-6">জরুরি অফিসিয়াল বিজ্ঞপ্তি</h2>
+                    <p class="mb-4">এতদ্বারা প্রতিষ্ঠানের সকল শিক্ষক, কর্মকর্তা ও শিক্ষার্থীদের অবগতির জন্য জানানো যাচ্ছে যে, আগামী আগামী রবিবার পবিত্র ঈদে মিলাদুন্নবী (সা.) উপলক্ষে প্রতিষ্ঠানের সকল কার্যক্রম স্থগিত থাকবে।</p>
+                    <p class="mb-8">আগামী সোমবার থেকে যথারীতি সময়সূচি অনুযায়ী শিক্ষা কার্যক্রম পরিচালিত হবে।</p>
+                    <div class="flex justify-end pt-12">
+                        <div class="text-center border-t border-slate-400 pt-1 w-48 text-xs font-semibold">
+                            অধ্যক্ষ / পরিচালক
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'sunnahChecklist') {
+                setColumns(1);
+                body1.innerHTML = `
+                    <h2 class="text-xl font-bold text-center text-teal-800 font-tiro mb-4">দৈনন্দিন সুন্নাতের আমল চেকলিস্ট</h2>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 p-2 bg-teal-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-sm">ঘুম থেকে উঠে মিসওয়াক ও অজু করা</span></div>
+                        <div class="flex items-center gap-2 p-2 bg-teal-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-sm">পাঁচ ওয়াক্ত নামাজ জামাতে আদায় করা</span></div>
+                        <div class="flex items-center gap-2 p-2 bg-teal-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-sm">সকাল-সন্ধ্যার জিকির ও দোয়া পাঠ করা</span></div>
+                    </div>
+                `;
+            } else if (type === 'islamicPoster') {
+                setColumns(1);
+                changePageBorder('golden');
+                body1.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="font-amiri text-3xl text-amber-700 mb-4" dir="rtl">﷽</p>
+                        <h1 class="text-3xl font-bold font-tiro text-slate-900 mb-2">মহতী ইসলামিক সেমিনার</h1>
+                        <p class="text-lg font-semibold text-emerald-700 mb-6">"দৈনন্দিন জীবনে আল-কুরআনের শিক্ষা"</p>
+                        <div class="bg-amber-50 p-4 rounded-lg border border-amber-200 inline-block text-left text-sm space-y-1">
+                            <p><strong>📅 তারিখ:</strong> ২৫ নভেম্বর, ২০২৬</p>
+                            <p><strong>⏰ সময়:</strong> বেলা ৩:০০ ঘটিকা</p>
+                            <p><strong>📍 স্থান:</strong> কেন্দ্রীয় মিলনায়তন</p>
+                        </div>
+                    </div>
+                `;
+            }
+            updatePageStats();
+        }
+
+        function getTemplateTitle(t) {
+            const titles = {
+                masnoonDua: "মাসনূন দোয়া ও বই",
+                questionPaper: "মাদ্রাসার প্রশ্নপত্র",
+                examRoutine: "পরীক্ষার রুটিন",
+                officialNotice: "অফিসিয়াল নোটিশ",
+                sunnahChecklist: "আমল চেকলিস্ট",
+                islamicPoster: "ইসলামিক পোস্টার"
+            };
+            return titles[t] || "নতুন নথিপত্র";
+        }
+
+        // PDF EXPORT SYSTEM
+        function openPdfModal() {
+            updatePageRangeOptions();
+            document.getElementById('pdfModal').classList.remove('hidden');
+        }
+        function closePdfModal() {
+            document.getElementById('pdfModal').classList.add('hidden');
+        }
+
+        function updatePageRangeOptions() {
+            const select = document.getElementById('pdfPageRange');
+            select.innerHTML = `<option value="all">সকল পৃষ্ঠা ডাউনলোড করুন (মোট ${pageCount} টি)</option>`;
+            for (let i = 1; i <= pageCount; i++) {
+                select.innerHTML += `<option value="${i}">শুধু পৃষ্ঠা ${i}</option>`;
+            }
+        }
+
+        function generateAndDownloadPDF() {
+            closePdfModal();
+            const range = document.getElementById('pdfPageRange').value;
+            const title = document.getElementById('docTitle').value || 'DocuStudio-Document';
+
+            let targetElement;
+            if (range === 'all') {
+                targetElement = document.getElementById('pagesContainer');
+            } else {
+                targetElement = document.getElementById(`page-${range}`);
+            }
+
+            const opt = {
+                margin: 0,
+                filename: `${title}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Show temporary status
+            const status = document.getElementById('saveStatus');
+            status.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> PDF প্রসেসিং হচ্ছে...`;
+
+            html2pdf().set(opt).from(targetElement).save().then(() => {
+                status.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> সংরক্ষণে প্রস্তুত`;
+            }).catch(err => {
+                console.error(err);
+                alert("PDF তৈরির সময় একটি ত্রুটি ঘটেছে!");
+                status.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> সংরক্ষণে প্রস্তুত`;
+            });
+        }
+
+        // JSON SAVE & OPEN SYSTEM
+        function saveProjectJSON() {
+            const pagesData = [];
+            for (let i = 1; i <= pageCount; i++) {
+                const pageEl = document.getElementById(`page-${i}`);
+                if (pageEl) {
+                    pagesData.push({
+                        id: i,
+                        html: pageEl.innerHTML
+                    });
+                }
+            }
+
+            const project = {
+                title: document.getElementById('docTitle').value,
+                pageCount: pageCount,
+                pages: pagesData
+            };
+
+            const jsonStr = JSON.stringify(project, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${project.title || 'DocuProject'}.docjson`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadProjectJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const project = JSON.parse(e.target.result);
+                    document.getElementById('docTitle').value = project.title || 'নথি';
+                    
+                    const container = document.getElementById('pagesContainer');
+                    container.innerHTML = '';
+                    pageCount = project.pageCount || project.pages.length;
+
+                    project.pages.forEach((p, idx) => {
+                        const pageDiv = document.createElement('div');
+                        pageDiv.id = `page-${idx + 1}`;
+                        pageDiv.className = 'page-canvas p-[25mm] rounded shadow-xl relative transition-all';
+                        pageDiv.onclick = () => selectPage(idx + 1);
+                        pageDiv.innerHTML = p.html;
+                        container.appendChild(pageDiv);
+
+                        // Rebind canvas element drag events
+                        pageDiv.querySelectorAll('.canvas-element').forEach(el => makeElementDraggableAndResizable(el));
+                    });
+
+                    updatePageStats();
+                    alert("প্রজেক্ট সফলভাবে লোড হয়েছে!");
+                } catch (err) {
+                    alert("অবৈধ ফাইল ফরম্যাট!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // AUTO-SAVE SYSTEM (LOCALSTORAGE)
+        function setupAutoSave() {
+            setInterval(() => {
+                handleDocumentChange();
+            }, 10000); // Auto save every 10 seconds
+        }
+
+        function handleDocumentChange() {
+            const pagesData = [];
+            for (let i = 1; i <= pageCount; i++) {
+                const pageEl = document.getElementById(`page-${i}`);
+                if (pageEl) {
+                    pagesData.push(pageEl.innerHTML);
+                }
+            }
+            const autoData = {
+                title: document.getElementById('docTitle').value,
+                pageCount: pageCount,
+                pages: pagesData,
+                timestamp: new Date().toLocaleTimeString('bn-BD')
+            };
+            localStorage.setItem('docustudio_autosave', JSON.stringify(autoData));
+            document.getElementById('saveStatus').innerHTML = `<i class="fa-solid fa-check text-emerald-600"></i> অটো-সেভ হয়েছে (${autoData.timestamp})`;
+        }
+
+        function loadAutoSavedData() {
+            const dataStr = localStorage.getItem('docustudio_autosave');
+            if (dataStr) {
+                try {
+                    const data = JSON.parse(dataStr);
+                    if (data && data.pages && data.pages.length > 0) {
+                        document.getElementById('docTitle').value = data.title || 'সংরক্ষিত নথি';
+                        pageCount = data.pageCount;
+                        const container = document.getElementById('pagesContainer');
+                        container.innerHTML = '';
+
+                        data.pages.forEach((htmlContent, idx) => {
+                            const pageDiv = document.createElement('div');
+                            pageDiv.id = `page-${idx + 1}`;
+                            pageDiv.className = 'page-canvas p-[25mm] rounded shadow-xl relative transition-all';
+                            pageDiv.onclick = () => selectPage(idx + 1);
+                            pageDiv.innerHTML = htmlContent;
+                            container.appendChild(pageDiv);
+
+                            pageDiv.querySelectorAll('.canvas-element').forEach(el => makeElementDraggableAndResizable(el));
+                        });
+                        updatePageStats();
+                    }
+                } catch (e) {
+                    console.log("No autosave recovery required.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+```
