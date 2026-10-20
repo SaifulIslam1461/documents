@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DocuStudio Pro - Canva & Document Editor</title>
+    <title>DocuStudio Pro - Modern Mobile Document Editor</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,10 +20,9 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts for Bengali & Arabic -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Kalpurush&family=Scheherazade+New:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
-    <!-- PDF Generation Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         body { font-family: 'Hind Siliguri', 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .font-amiri { font-family: 'Amiri', serif; }
@@ -52,6 +51,7 @@
                 width: 100% !important;
                 min-height: auto !important;
                 padding: 16px !important;
+                margin-top: 10px !important;
             }
         }
 
@@ -75,16 +75,40 @@
         td, th {
             border: 1px solid #cbd5e1;
             padding: 8px;
-            min-width: 50px;
+            min-width: 45px;
             resize: both;
             overflow: auto;
+        }
+
+        /* High Precision Clean Print Styles for Perfect PDF Export */
+        @media print {
+            body * { visibility: hidden; }
+            #documentCanvas, #documentCanvas * { visibility: visible; }
+            #documentCanvas {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                max-width: none !important;
+                box-shadow: none !important;
+                padding: 15mm !important;
+                margin: 0 !important;
+            }
+            .no-print, button, .draggable-item button, .draggable-item input[type="color"] {
+                display: none !important;
+            }
+            .draggable-item {
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+            }
         }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
 
-    <!-- TOP HEADER -->
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2.5 flex items-center justify-between shrink-0 z-30 shadow-sm">
+    <!-- TOP APP BAR -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2.5 flex items-center justify-between shrink-0 z-30 shadow-sm no-print">
         <div class="flex items-center space-x-2 overflow-hidden">
             <button onclick="openMenuModal()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition">
                 <i class="fa-solid fa-bars text-lg"></i>
@@ -107,15 +131,15 @@
                 <i class="fa-solid fa-layer-group text-xs"></i>
                 <span class="hidden xs:inline">টেমপ্লেট</span>
             </button>
-            <button onclick="openPdfPreview()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs rounded-xl flex items-center space-x-1 shadow-sm active:scale-95 transition">
+            <button onclick="triggerPrintPdf()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs rounded-xl flex items-center space-x-1 shadow-sm active:scale-95 transition">
                 <i class="fa-solid fa-file-pdf"></i>
-                <span>PDF</span>
+                <span>PDF তৈরি করুন</span>
             </button>
         </div>
     </header>
 
-    <!-- TAB NAVIGATION -->
-    <nav class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-2 flex items-center space-x-1 shrink-0 overflow-x-auto no-scrollbar z-20">
+    <!-- NAVIGATION TABS -->
+    <nav class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-2 flex items-center space-x-1 shrink-0 overflow-x-auto no-scrollbar z-20 no-print">
         <button onclick="switchTab('home')" class="tab-btn px-3 py-2 text-xs font-semibold border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 whitespace-nowrap flex items-center space-x-1.5 transition">
             <i class="fa-solid fa-pen-nib"></i> <span>হোম & লেখা</span>
         </button>
@@ -131,7 +155,7 @@
     </nav>
 
     <!-- TOOLBAR PANELS -->
-    <div id="toolbarPanels" class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 px-3 py-2 shrink-0 z-10">
+    <div id="toolbarPanels" class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 px-3 py-2 shrink-0 z-10 no-print">
         <!-- HOME PANEL -->
         <div id="panel-home" class="tool-panel flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5">
             <select id="fontFamilySelect" onchange="applyFontFamily(this.value)" class="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:outline-none shrink-0">
@@ -198,19 +222,19 @@
         </div>
     </div>
 
-    <!-- MAIN WORKSPACE -->
-    <main id="workspaceContainer" class="flex-1 overflow-y-auto p-3 sm:p-6 flex flex-col items-center relative focus:outline-none">
-        <div id="documentCanvas" class="a4-page p-6 sm:p-12 rounded-xl text-slate-800 transition-all duration-300 shadow-xl" style="column-count: 1; column-gap: 30px;">
+    <!-- MAIN WORKSPACE WORKAREA WITH OPTIMIZED PADDING -->
+    <main id="workspaceContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center relative focus:outline-none pt-6 sm:pt-8">
+        <div id="documentCanvas" class="a4-page p-6 sm:p-12 rounded-xl text-slate-800 transition-all duration-300 shadow-xl my-2">
             
-            <div class="text-xs text-slate-400 mb-4 pb-2 border-b border-dashed border-slate-200 flex justify-between items-center" contenteditable="true" spellcheck="false">
+            <div class="text-xs text-slate-400 mb-6 pb-2 border-b border-dashed border-slate-200 flex justify-between items-center" contenteditable="true" spellcheck="false">
                 <span>ডকুমেন্ট হেডার (এখানে লিখুন)</span>
                 <span class="font-semibold">DocuStudio Paper</span>
             </div>
 
-            <div id="mainEditorArea" contenteditable="true" spellcheck="false" class="outline-none min-h-[400px] font-hind text-base leading-relaxed space-y-4">
+            <div id="mainEditorArea" contenteditable="true" spellcheck="false" class="outline-none min-h-[420px] font-hind text-base leading-relaxed space-y-4 pt-2">
                 <h1 class="text-2xl sm:text-3xl font-bold font-hind text-slate-900 border-b pb-2">বিসমিল্লাহির রহমানির রাহিম</h1>
-                <p class="font-amiri text-xl text-emerald-700 text-center py-1" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
-                <p>এখানে লিখুন বা ক্যানভা অপشن থেকে শেপ ও বক্স ড্র্যাগ করে বসান। টেবিলের সেলগুলো টান দিয়ে ছোট-বড় করতে পারবেন।</p>
+                <p class="font-amiri text-2xl text-emerald-700 text-center py-2" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+                <p>এখানে লিখুন বা ক্যানভা অপশন থেকে শেপ ও বক্স ড্র্যাগ করে বসান। টেবিলের সেলগুলো টান দিয়ে ছোট-বড় করতে পারবেন।</p>
             </div>
 
             <div class="mt-12 pt-4 border-t border-dashed border-slate-200 flex justify-between items-center text-xs text-slate-400">
@@ -218,13 +242,13 @@
                 <span>DocuStudio Pro</span>
             </div>
 
-            <!-- CANVAS DRAGGABLE ELEMENTS LAYER -->
+            <!-- CANVAS DRAGGABLE LAYER -->
             <div id="canvasElementsLayer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
         </div>
     </main>
 
     <!-- FLOATING ACTION BUTTON (FAB) -->
-    <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end space-y-2">
+    <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end space-y-2 no-print">
         <div id="fabMenu" class="hidden flex flex-col space-y-2 bg-white dark:bg-slate-800 p-2 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700">
             <button onclick="addDraggableText(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
                 <i class="fa-solid fa-font text-brand-500 w-5"></i> <span>টেক্সট বক্স</span>
@@ -242,7 +266,7 @@
     </div>
 
     <!-- MODALS -->
-    <div id="menuModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex justify-start">
+    <div id="menuModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex justify-start no-print">
         <div class="bg-white dark:bg-slate-800 w-4/5 max-w-xs h-full shadow-2xl flex flex-col p-5 space-y-6 overflow-y-auto">
             <div class="flex items-center justify-between border-b pb-4 dark:border-slate-700">
                 <span class="font-bold text-base">DocuStudio Pro</span>
@@ -252,18 +276,10 @@
                 <button onclick="newDocument(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file text-brand-500 w-5"></i> <span>নতুন ডকুমেন্ট</span>
                 </button>
-                <button onclick="openPdfPreview(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
+                <button onclick="triggerPrintPdf(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file-pdf text-red-500 w-5"></i> <span>PDF এক্সপোর্ট</span>
                 </button>
             </div>
-        </div>
-    </div>
-
-    <div id="pdfModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden p-6 text-center space-y-4">
-            <h3 class="font-bold text-lg">PDF ডাউনলোড করুন</h3>
-            <button onclick="downloadPdf()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg">ডাউনলোড</button>
-            <button onclick="closePdfPreview()" class="text-xs text-slate-400">বাতিল</button>
         </div>
     </div>
 
@@ -287,11 +303,9 @@
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function openMenuModal() { document.getElementById('menuModal').classList.remove('hidden'); }
         function closeMenuModal() { document.getElementById('menuModal').classList.add('hidden'); }
-        function openPdfPreview() { document.getElementById('pdfModal').classList.remove('hidden'); }
-        function closePdfPreview() { document.getElementById('pdfModal').classList.add('hidden'); }
 
         function formatText(cmd) { document.execCommand(cmd, false, null); }
-        function applyFontFamily(font) { document.getElementById('mainEditorArea').className = `outline-none min-h-[400px] text-base leading-relaxed space-y-4 ${font}`; }
+        function applyFontFamily(font) { document.getElementById('mainEditorArea').className = `outline-none min-h-[420px] text-base leading-relaxed space-y-4 pt-2 ${font}`; }
         function applyFontSize(size) { document.getElementById('mainEditorArea').style.fontSize = size; }
         function setTextDirection(dir) {
             const ed = document.getElementById('mainEditorArea');
@@ -299,7 +313,7 @@
             ed.style.textAlign = dir === 'rtl' ? 'right' : 'left';
         }
 
-        // DRAGGABLE ENGINE (TOUCH & MOUSE)
+        // DRAGGABLE ENGINE
         let activeElement = null;
 
         function makeElementDraggable(el) {
@@ -351,11 +365,11 @@
             const layer = document.getElementById('canvasElementsLayer');
             const wrap = document.createElement('div');
             wrap.className = 'draggable-item p-2 bg-white/90 border border-brand-500 rounded-lg shadow-md flex items-center space-x-1';
-            wrap.style.left = '50px'; wrap.style.top = '120px';
+            wrap.style.left = '40px'; wrap.style.top = '140px';
             
             wrap.innerHTML = `
                 <div contenteditable="true" class="outline-none px-2 py-1 text-sm font-bold min-w-[80px]">নতুন টেক্সট</div>
-                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1">✕</button>
+                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1 no-print">✕</button>
             `;
             layer.appendChild(wrap);
             makeElementDraggable(wrap);
@@ -365,7 +379,7 @@
             const layer = document.getElementById('canvasElementsLayer');
             const wrap = document.createElement('div');
             wrap.className = 'draggable-item p-1 flex flex-col items-center justify-center shadow-lg';
-            wrap.style.left = '60px'; wrap.style.top = '180px';
+            wrap.style.left = '50px'; wrap.style.top = '200px';
             
             if(type === 'rect') {
                 wrap.style.width = '100px'; wrap.style.height = '70px';
@@ -378,7 +392,7 @@
             }
 
             wrap.innerHTML = `
-                <div class="absolute -top-3 -right-3 flex space-x-1">
+                <div class="absolute -top-3 -right-3 flex space-x-1 no-print">
                     <input type="color" onchange="this.parentElement.parentElement.style.backgroundColor=this.value" class="w-5 h-5 rounded-full cursor-pointer border-none">
                     <button onclick="this.parentElement.parentElement.remove()" class="w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold">✕</button>
                 </div>
@@ -395,11 +409,11 @@
                 const layer = document.getElementById('canvasElementsLayer');
                 const wrap = document.createElement('div');
                 wrap.className = 'draggable-item';
-                wrap.style.left = '80px'; wrap.style.top = '200px';
+                wrap.style.left = '60px'; wrap.style.top = '220px';
                 wrap.innerHTML = `
                     <div class="relative group">
                         <img src="${evt.target.result}" class="w-28 h-28 object-cover rounded-lg shadow-md">
-                        <button onclick="this.parentElement.parentElement.remove()" class="absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold">✕</button>
+                        <button onclick="this.parentElement.parentElement.remove()" class="absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold no-print">✕</button>
                     </div>
                 `;
                 layer.appendChild(wrap);
@@ -408,7 +422,7 @@
             reader.readAsDataURL(file);
         }
 
-        // TABLE ENGINE
+        // TABLE SYSTEM
         let selectedTable = null;
 
         document.getElementById('mainEditorArea').addEventListener('click', function(e) {
@@ -474,18 +488,10 @@
             }
         }
 
-        function downloadPdf() {
-            closePdfPreview();
-            const element = document.getElementById('documentCanvas');
-            const title = document.getElementById('docTitleInput').value || 'document';
-            const opt = {
-                margin: 5,
-                filename: `${title}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().from(element).set(opt).save();
+        // PERFECT PDF GENERATION ENGINE
+        function triggerPrintPdf() {
+            document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+            window.print();
         }
     </script>
 </body>
