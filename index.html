@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DocuStudio Pro - Mobile First Document & Canva Editor</title>
+    <title>DocuStudio Pro - Modern Mobile Document Editor</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,9 +20,9 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts for Bengali, Arabic & English -->
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Hind+Siliguri:wght@300;400;500;600;700&family=Kalpurush&family=Scheherazade+New:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
-    <!-- PDF Generation & Canvas Libraries -->
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Kalpurush&family=Scheherazade+New:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
+    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Hind Siliguri', 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -53,21 +53,36 @@
                 min-height: auto !important;
                 padding: 16px !important;
                 box-shadow: none !important;
-                border-radius: 0 !important;
             }
         }
 
-        .canvas-element {
+        .draggable-item {
             position: absolute;
             cursor: move;
-            user-select: none;
             touch-action: none;
+            user-select: none;
+            z-index: 20;
+        }
+
+        .draggable-item.active {
+            outline: 2px dashed #16a34a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        td, th {
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+            min-width: 40px;
         }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
 
-    <!-- TOP HEADER: Mobile Optimized App Bar -->
+    <!-- TOP HEADER -->
     <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2.5 flex items-center justify-between shrink-0 z-30 shadow-sm">
         <div class="flex items-center space-x-2 overflow-hidden">
             <button onclick="openMenuModal()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition">
@@ -75,8 +90,8 @@
             </button>
             <div class="flex flex-col truncate">
                 <div class="flex items-center space-x-1.5">
-                    <input type="text" id="docTitleInput" value="নতুন নথিপ্রত্র" class="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-brand-500 focus:outline-none px-1 truncate w-36 sm:w-48 text-slate-800 dark:text-white" title="নথির নাম পরিবর্তন করুন">
-                    <span id="saveStatusIndicator" class="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="অটো-সেভ সক্রিয়"></span>
+                    <input type="text" id="docTitleInput" value="নতুন নথিপ্রত্র" class="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-brand-500 focus:outline-none px-1 truncate w-32 sm:w-48 text-slate-800 dark:text-white">
+                    <span id="saveStatusIndicator" class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                 </div>
                 <span class="text-[10px] text-slate-400 px-1" id="wordCharCounter">০ শব্দ | ০ অক্ষর</span>
             </div>
@@ -98,7 +113,7 @@
         </div>
     </header>
 
-    <!-- SECONDARY TOOLBAR: Tab Navigation -->
+    <!-- TAB NAVIGATION -->
     <nav class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-2 flex items-center space-x-1 shrink-0 overflow-x-auto no-scrollbar z-20">
         <button onclick="switchTab('home')" class="tab-btn px-3 py-2 text-xs font-semibold border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 whitespace-nowrap flex items-center space-x-1.5 transition">
             <i class="fa-solid fa-pen-nib"></i> <span>হোম & লেখা</span>
@@ -110,24 +125,22 @@
             <i class="fa-solid fa-file-lines"></i> <span>পেজ লেআউট</span>
         </button>
         <button onclick="switchTab('table')" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 whitespace-nowrap flex items-center space-x-1.5 transition">
-            <i class="fa-solid fa-table"></i> <span>টেবিল</span>
+            <i class="fa-solid fa-table"></i> <span>টেবিল টুলস</span>
         </button>
     </nav>
 
-    <!-- ACTION SUB-TOOLBAR PANELS -->
+    <!-- TOOLBAR PANELS -->
     <div id="toolbarPanels" class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 px-3 py-2 shrink-0 z-10">
         <!-- HOME PANEL -->
         <div id="panel-home" class="tool-panel flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5">
             <select id="fontFamilySelect" onchange="applyFontFamily(this.value)" class="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:outline-none shrink-0">
-                <option value="font-hind">হিন্দ সিলিগুড়ি (বাংলা)</option>
+                <option value="font-hind">হিন্দ সিলিগুড়ি</option>
                 <option value="font-kalpurush">কালপুরুষ</option>
                 <option value="font-tiro">টিরো বাংলা</option>
                 <option value="font-amiri">আমিরি (আরবি)</option>
-                <option value="font-scheherazade">শেহেরাজাদ (আরবি)</option>
                 <option value="font-sans">ইন্টার (ইংরেজি)</option>
             </select>
             <select id="fontSizeSelect" onchange="applyFontSize(this.value)" class="text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:outline-none shrink-0">
-                <option value="12px">১২ পিক্সেল</option>
                 <option value="14px">১৪ পিক্সেল</option>
                 <option value="16px" selected>১৬ পিক্সেল</option>
                 <option value="18px">১৮ পিক্সেল</option>
@@ -139,23 +152,19 @@
             <button onclick="formatText('italic')" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center italic text-xs shrink-0 active:scale-95"><i class="fa-solid fa-italic"></i></button>
             <button onclick="formatText('underline')" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center underline text-xs shrink-0 active:scale-95"><i class="fa-solid fa-underline"></i></button>
             <div class="h-5 w-[1px] bg-slate-300 dark:bg-slate-600 shrink-0"></div>
-            <button onclick="formatText('justifyLeft')" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs shrink-0 active:scale-95"><i class="fa-solid fa-align-left"></i></button>
-            <button onclick="formatText('justifyCenter')" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs shrink-0 active:scale-95"><i class="fa-solid fa-align-center"></i></button>
-            <button onclick="formatText('justifyRight')" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs shrink-0 active:scale-95"><i class="fa-solid fa-align-right"></i></button>
-            <div class="h-5 w-[1px] bg-slate-300 dark:bg-slate-600 shrink-0"></div>
-            <button onclick="setTextDirection('rtl')" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold shrink-0 active:scale-95">RTL (আরবি)</button>
-            <button onclick="setTextDirection('ltr')" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold shrink-0 active:scale-95">LTR (বাংলা)</button>
+            <button onclick="setTextDirection('rtl')" class="px-2 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold shrink-0">RTL (আরবি)</button>
+            <button onclick="setTextDirection('ltr')" class="px-2 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold shrink-0">LTR (বাংলা)</button>
         </div>
 
-        <!-- CANVAS PANEL -->
+        <!-- CANVAS SHAPES PANEL -->
         <div id="panel-canvas" class="tool-panel hidden flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5">
-            <button onclick="addCanvasText()" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+            <button onclick="addDraggableText()" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
                 <i class="fa-solid fa-font text-brand-500"></i> <span>টেক্সট বক্স</span>
             </button>
-            <button onclick="addCanvasShape('rect')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+            <button onclick="addDraggableShape('rect')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
                 <i class="fa-solid fa-square text-blue-500"></i> <span>বক্স</span>
             </button>
-            <button onclick="addCanvasShape('circle')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+            <button onclick="addDraggableShape('circle')" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
                 <i class="fa-solid fa-circle text-amber-500"></i> <span>বৃত্ত</span>
             </button>
             <label class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm cursor-pointer active:scale-95">
@@ -166,70 +175,64 @@
 
         <!-- LAYOUT PANEL -->
         <div id="panel-layout" class="tool-panel hidden flex items-center space-x-3 overflow-x-auto no-scrollbar py-0.5">
+            <button onclick="setColumnCount(1)" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 rounded-lg text-xs font-medium">১ কলাম</button>
+            <button onclick="setColumnCount(2)" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 rounded-lg text-xs font-medium">২ কলাম</button>
             <div class="flex items-center space-x-1 shrink-0">
-                <span class="text-xs text-slate-500">কলাম:</span>
-                <button onclick="setColumnCount(1)" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-medium active:scale-95">১ কলাম</button>
-                <button onclick="setColumnCount(2)" class="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-medium active:scale-95">২ কলাম</button>
+                <span class="text-xs text-slate-500">কালার:</span>
+                <input type="color" value="#ffffff" onchange="setPageBackground(this.value)" class="w-6 h-6 rounded border cursor-pointer bg-transparent">
             </div>
-            <div class="h-5 w-[1px] bg-slate-300 dark:bg-slate-600 shrink-0"></div>
-            <div class="flex items-center space-x-1 shrink-0">
-                <span class="text-xs text-slate-500">পেজ কালার:</span>
-                <input type="color" value="#ffffff" onchange="setPageBackground(this.value)" class="w-7 h-7 rounded border border-slate-300 cursor-pointer bg-transparent">
-            </div>
-            <div class="h-5 w-[1px] bg-slate-300 dark:bg-slate-600 shrink-0"></div>
-            <button onclick="addPageBreak()" class="px-3 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 rounded-lg text-xs font-medium shrink-0 active:scale-95">
-                <i class="fa-solid fa-plus"></i> নতুন পেজ
-            </button>
+            <button onclick="addPageBreak()" class="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-xs font-medium shrink-0">+ নতুন পেজ</button>
         </div>
 
-        <!-- TABLE PANEL -->
+        <!-- TABLE CUSTOMIZATION PANEL -->
         <div id="panel-table" class="tool-panel hidden flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5">
-            <button onclick="insertTable(2, 2)" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
-                <i class="fa-solid fa-table text-brand-500"></i> <span>২x২ টেবিল</span>
+            <button onclick="createCustomTable()" class="px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
+                <i class="fa-solid fa-plus"></i> <span>নতুন টেবিল</span>
             </button>
-            <button onclick="insertTable(3, 3)" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-medium flex items-center space-x-1 shrink-0 shadow-sm active:scale-95">
-                <i class="fa-solid fa-table-cells text-blue-500"></i> <span>৩x৩ টেবিল</span>
-            </button>
+            <div class="h-5 w-[1px] bg-slate-300 shrink-0"></div>
+            <button onclick="addTableRow()" class="px-2.5 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 rounded-xl text-xs font-medium shrink-0">+ রো (Row)</button>
+            <button onclick="addTableColumn()" class="px-2.5 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 rounded-xl text-xs font-medium shrink-0">+ কলাম (Column)</button>
+            <button onclick="deleteTableRow()" class="px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-medium shrink-0">- রো বাদ</button>
+            <button onclick="deleteTableColumn()" class="px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-medium shrink-0">- কলাম বাদ</button>
         </div>
     </div>
 
     <!-- MAIN WORKSPACE -->
     <main id="workspaceContainer" class="flex-1 overflow-y-auto p-3 sm:p-6 flex flex-col items-center relative focus:outline-none">
         <div id="documentCanvas" class="a4-page p-6 sm:p-12 rounded-xl text-slate-800 transition-all duration-300 shadow-xl" style="column-count: 1; column-gap: 30px;">
+            
             <div class="text-xs text-slate-400 mb-4 pb-2 border-b border-dashed border-slate-200 flex justify-between items-center" contenteditable="true" spellcheck="false">
                 <span>ডকুমেন্ট হেডার (এখানে লিখুন)</span>
                 <span class="font-semibold">DocuStudio Paper</span>
             </div>
 
-            <div id="mainEditorArea" contenteditable="true" spellcheck="false" class="outline-none min-h-[500px] font-hind text-base leading-relaxed space-y-4">
+            <div id="mainEditorArea" contenteditable="true" spellcheck="false" class="outline-none min-h-[400px] font-hind text-base leading-relaxed space-y-4">
                 <h1 class="text-2xl sm:text-3xl font-bold font-hind text-slate-900 border-b pb-2">বিসমিল্লাহির রহমানির রাহিম</h1>
-                <p class="font-amiri text-xl sm:text-2xl text-emerald-700 text-center py-2" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
-                <p>স্বাগতম <strong>DocuStudio Pro</strong>-এ! এটি আপনার মোবাইল ফ্রেন্ডলি আধুনিক ডকুমেন্ট এডিটর। নিচের ফ্লোটিং (+) বাটন বা ওপরের টুলবার ব্যবহার করে যেকোনো ডিজাইন বা লেখা তৈরি করুন।</p>
+                <p class="font-amiri text-xl text-emerald-700 text-center py-1" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+                <p>এখানে লিখুন বা উপরের <strong>"ডিজাইন ও শেপ"</strong> অপশন থেকে টেক্সট ও শেপ ড্র্যাগ করে বসান।</p>
             </div>
 
             <div class="mt-12 pt-4 border-t border-dashed border-slate-200 flex justify-between items-center text-xs text-slate-400">
-                <span>স্বয়ংক্রিয় সংকলিত পৃষ্ঠা ১</span>
+                <span>পৃষ্ঠা ১</span>
                 <span>DocuStudio Pro</span>
             </div>
 
+            <!-- CANVAS DRAGGABLE ELEMENTS LAYER -->
             <div id="canvasElementsLayer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
         </div>
     </main>
 
     <!-- FLOATING ACTION BUTTON (FAB) -->
     <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end space-y-2">
-        <div id="fabMenu" class="hidden flex flex-col space-y-2 bg-white dark:bg-slate-800 p-2 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in duration-200">
-            <button onclick="addCanvasText(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-slate-100 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200">
+        <div id="fabMenu" class="hidden flex flex-col space-y-2 bg-white dark:bg-slate-800 p-2 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700">
+            <button onclick="addDraggableText(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
                 <i class="fa-solid fa-font text-brand-500 w-5"></i> <span>টেক্সট বক্স</span>
             </button>
-            <button onclick="addCanvasShape('rect'); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-slate-100 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200">
-                <i class="fa-solid fa-square text-blue-500 w-5"></i> <span>শেপ বক্স</span>
+            <button onclick="addDraggableShape('rect'); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
+                <i class="fa-solid fa-square text-blue-500 w-5"></i> <span>বক্স শেপ</span>
             </button>
-            <button onclick="addPageBreak(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-slate-100 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200">
-                <i class="fa-solid fa-plus text-emerald-500 w-5"></i> <span>নতুন পৃষ্ঠা</span>
-            </button>
-            <button onclick="openTemplateModal(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-slate-100 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200">
-                <i class="fa-solid fa-layer-group text-amber-500 w-5"></i> <span>টেমপ্লেট</span>
+            <button onclick="createCustomTable(); toggleFab();" class="flex items-center space-x-2 px-3 py-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-xs font-medium">
+                <i class="fa-solid fa-table text-purple-500 w-5"></i> <span>নতুন টেবিল</span>
             </button>
         </div>
         <button onclick="toggleFab()" class="w-14 h-14 bg-brand-600 hover:bg-brand-700 text-white rounded-full shadow-2xl flex items-center justify-center text-xl active:scale-95 transition-all">
@@ -237,163 +240,192 @@
         </button>
     </div>
 
-    <!-- SIDE MENU MODAL -->
+    <!-- MODALS -->
     <div id="menuModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex justify-start">
         <div class="bg-white dark:bg-slate-800 w-4/5 max-w-xs h-full shadow-2xl flex flex-col p-5 space-y-6 overflow-y-auto">
             <div class="flex items-center justify-between border-b pb-4 dark:border-slate-700">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold">D</div>
-                    <span class="font-bold text-base">DocuStudio Pro</span>
-                </div>
+                <span class="font-bold text-base">DocuStudio Pro</span>
                 <button onclick="closeMenuModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-2">
-                <button onclick="newDocument(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center space-x-3 text-sm font-medium">
+                <button onclick="newDocument(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file text-brand-500 w-5"></i> <span>নতুন ডকুমেন্ট</span>
                 </button>
-                <button onclick="exportProjectJson(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center space-x-3 text-sm font-medium">
-                    <i class="fa-solid fa-floppy-disk text-blue-500 w-5"></i> <span>প্রজেক্ট সেভ (.json)</span>
-                </button>
-                <label class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center space-x-3 text-sm font-medium cursor-pointer">
-                    <i class="fa-solid fa-folder-open text-amber-500 w-5"></i> <span>প্রজেক্ট ওপেন করুন</span>
-                    <input type="file" accept=".json" onchange="importProjectJson(event)" class="hidden">
-                </label>
-                <button onclick="openTemplateModal(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center space-x-3 text-sm font-medium">
-                    <i class="fa-solid fa-layer-group text-purple-500 w-5"></i> <span>রেডিমেড টেমপ্লেট</span>
-                </button>
-                <button onclick="openPdfPreview(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center space-x-3 text-sm font-medium">
-                    <i class="fa-solid fa-file-pdf text-red-500 w-5"></i> <span>PDF এক্সপোর্ট ও প্রিভিউ</span>
+                <button onclick="openPdfPreview(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
+                    <i class="fa-solid fa-file-pdf text-red-500 w-5"></i> <span>PDF এক্সপোর্ট</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- TEMPLATES MODAL -->
-    <div id="templateModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-slate-700">
-                <h3 class="font-bold text-base flex items-center space-x-2">
-                    <i class="fa-solid fa-layer-group text-brand-500"></i>
-                    <span>রেডিমেড টেমপ্লেট নির্বাচন করুন</span>
-                </h3>
-                <button onclick="closeTemplateModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div onclick="loadTemplate('masnoon')" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">মাসনূন দোয়া ও আরবি-বাংলা</h4>
-                    <p class="text-xs text-slate-500 mt-1">দোয়া ও জিকিরের সংকলন।</p>
-                </div>
-                <div onclick="loadTemplate('exam')" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">পরীক্ষার প্রশ্নপত্র</h4>
-                    <p class="text-xs text-slate-500 mt-1">প্রশ্নপত্র ফরম্যাট।</p>
-                </div>
-                <div onclick="loadTemplate('notice')" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">অফিশিয়াল নোটিশ ও বিজ্ঞপ্তি</h4>
-                    <p class="text-xs text-slate-500 mt-1">জরুরি নোটিশ ফরম্যাট।</p>
-                </div>
-                <div onclick="loadTemplate('routine')" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
-                    <h4 class="font-bold text-sm text-brand-600">সময়সূচী রুটিন</h4>
-                    <p class="text-xs text-slate-500 mt-1">টেবিলসহ রুটিন ছক।</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PDF PREVIEW MODAL -->
     <div id="pdfModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-slate-700">
-                <h3 class="font-bold text-base flex items-center space-x-2">
-                    <i class="fa-solid fa-file-pdf text-red-500"></i>
-                    <span>PDF ডাউনলোড</span>
-                </h3>
-                <button onclick="closePdfPreview()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-6 space-y-4 text-center">
-                <div class="w-16 h-16 bg-red-50 dark:bg-red-950/40 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                </div>
-                <p class="text-sm text-slate-600 dark:text-slate-300">আপনার ডকুমেন্টটি PDF আকারে ডাউনলোড করার জন্য প্রস্তুত।</p>
-                <button onclick="downloadPdf()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition active:scale-95">
-                    <i class="fa-solid fa-download mr-2"></i> এখনই PDF ডাউনলোড করুন
-                </button>
-            </div>
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden p-6 text-center space-y-4">
+            <h3 class="font-bold text-lg">PDF ডাউনলোড করুন</h3>
+            <button onclick="downloadPdf()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg">ডাউনলোড</button>
+            <button onclick="closePdfPreview()" class="text-xs text-slate-400">বাতিল</button>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT SYSTEM LOGIC -->
     <script>
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('border-brand-500', 'text-brand-600', 'dark:text-brand-400', 'font-semibold');
-                btn.classList.add('border-transparent', 'text-slate-600', 'dark:text-slate-400', 'font-medium');
+                btn.classList.remove('border-brand-500', 'text-brand-600', 'font-semibold');
+                btn.classList.add('border-transparent', 'text-slate-600', 'font-medium');
             });
-            event.currentTarget.classList.add('border-brand-500', 'text-brand-600', 'dark:text-brand-400', 'font-semibold');
-            event.currentTarget.classList.remove('border-transparent', 'text-slate-600', 'dark:text-slate-400', 'font-medium');
-
+            event.currentTarget.classList.add('border-brand-500', 'text-brand-600', 'font-semibold');
             document.querySelectorAll('.tool-panel').forEach(panel => panel.classList.add('hidden'));
             document.getElementById(`panel-${tabId}`).classList.remove('hidden');
         }
 
         function toggleFab() {
-            const menu = document.getElementById('fabMenu');
-            const icon = document.getElementById('fabIcon');
-            menu.classList.toggle('hidden');
-            icon.classList.toggle('rotate-45');
+            document.getElementById('fabMenu').classList.toggle('hidden');
+            document.getElementById('fabIcon').classList.toggle('rotate-45');
         }
 
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
-
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function openMenuModal() { document.getElementById('menuModal').classList.remove('hidden'); }
         function closeMenuModal() { document.getElementById('menuModal').classList.add('hidden'); }
-        function openTemplateModal() { document.getElementById('templateModal').classList.remove('hidden'); }
-        function closeTemplateModal() { document.getElementById('templateModal').classList.add('hidden'); }
         function openPdfPreview() { document.getElementById('pdfModal').classList.remove('hidden'); }
         function closePdfPreview() { document.getElementById('pdfModal').classList.add('hidden'); }
 
-        function formatText(command) {
-            document.execCommand(command, false, null);
-            document.getElementById('mainEditorArea').focus();
-        }
-
-        function applyFontFamily(fontClass) {
-            const editor = document.getElementById('mainEditorArea');
-            editor.className = `outline-none min-h-[500px] text-base leading-relaxed space-y-4 ${fontClass}`;
-        }
-
-        function applyFontSize(size) {
-            document.getElementById('mainEditorArea').style.fontSize = size;
-        }
-
+        function formatText(cmd) { document.execCommand(cmd, false, null); }
+        function applyFontFamily(font) { document.getElementById('mainEditorArea').className = `outline-none min-h-[400px] text-base leading-relaxed space-y-4 ${font}`; }
+        function applyFontSize(size) { document.getElementById('mainEditorArea').style.fontSize = size; }
         function setTextDirection(dir) {
-            document.getElementById('mainEditorArea').style.direction = dir;
-            document.getElementById('mainEditorArea').style.textAlign = dir === 'rtl' ? 'right' : 'left';
+            const ed = document.getElementById('mainEditorArea');
+            ed.style.direction = dir;
+            ed.style.textAlign = dir === 'rtl' ? 'right' : 'left';
         }
 
-        function setColumnCount(count) {
-            document.getElementById('documentCanvas').style.columnCount = count;
+        // DRAGGABLE ENGINE (TOUCH & MOUSE)
+        let activeElement = null;
+
+        function makeElementDraggable(el) {
+            el.style.pointerEvents = 'auto';
+            let posX = 0, posY = 0, initialX = 0, initialY = 0;
+
+            function dragStart(e) {
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+                activeElement = el;
+                document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                el.classList.add('active');
+
+                if (e.type === "touchstart") {
+                    initialX = e.touches[0].clientX - el.offsetLeft;
+                    initialY = e.touches[0].clientY - el.offsetTop;
+                } else {
+                    initialX = e.clientX - el.offsetLeft;
+                    initialY = e.clientY - el.offsetTop;
+                }
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchmove', dragMove, { passive: false });
+                document.addEventListener('touchend', dragEnd);
+            }
+
+            function dragMove(e) {
+                if (!activeElement) return;
+                e.preventDefault();
+                let currentX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+                let currentY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+                
+                el.style.left = (currentX - initialX) + 'px';
+                el.style.top = (currentY - initialY) + 'px';
+            }
+
+            function dragEnd() {
+                activeElement = null;
+                document.removeEventListener('mousemove', dragMove);
+                document.removeEventListener('mouseup', dragEnd);
+                document.removeEventListener('touchmove', dragMove);
+                document.removeEventListener('touchend', dragEnd);
+            }
+
+            el.addEventListener('mousedown', dragStart);
+            el.addEventListener('touchstart', dragStart, { passive: false });
         }
 
-        function setPageBackground(color) {
-            document.getElementById('documentCanvas').style.backgroundColor = color;
+        function addDraggableText() {
+            const layer = document.getElementById('canvasElementsLayer');
+            const wrap = document.createElement('div');
+            wrap.className = 'draggable-item p-2 bg-white/90 border border-brand-500 rounded-lg shadow-md flex items-center space-x-1';
+            wrap.style.left = '50px'; wrap.style.top = '120px';
+            
+            wrap.innerHTML = `
+                <div contenteditable="true" class="outline-none px-2 py-1 text-sm font-bold min-w-[80px]">নতুন টেক্সট</div>
+                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1">✕</button>
+            `;
+            layer.appendChild(wrap);
+            makeElementDraggable(wrap);
         }
 
-        function addPageBreak() {
-            const editor = document.getElementById('mainEditorArea');
-            const hr = document.createElement('div');
-            hr.className = 'my-8 border-t-2 border-dashed border-slate-300 text-center text-xs text-slate-400 py-2';
-            hr.innerText = '--- পেজ ব্রেক ---';
-            editor.appendChild(hr);
+        function addDraggableShape(type) {
+            const layer = document.getElementById('canvasElementsLayer');
+            const wrap = document.createElement('div');
+            wrap.className = 'draggable-item p-1 flex flex-col items-center justify-center shadow-lg';
+            wrap.style.left = '60px'; wrap.style.top = '180px';
+            
+            if(type === 'rect') {
+                wrap.style.width = '100px'; wrap.style.height = '70px';
+                wrap.style.backgroundColor = '#3b82f6';
+                wrap.style.borderRadius = '8px';
+            } else if(type === 'circle') {
+                wrap.style.width = '80px'; wrap.style.height = '80px';
+                wrap.style.backgroundColor = '#f59e0b';
+                wrap.style.borderRadius = '50%';
+            }
+
+            wrap.innerHTML = `
+                <div class="absolute -top-3 -right-3 flex space-x-1">
+                    <input type="color" onchange="this.parentElement.parentElement.style.backgroundColor=this.value" class="w-5 h-5 rounded-full cursor-pointer border-none">
+                    <button onclick="this.parentElement.parentElement.remove()" class="w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold">✕</button>
+                </div>
+            `;
+            layer.appendChild(wrap);
+            makeElementDraggable(wrap);
         }
 
-        function insertTable(rows, cols) {
-            let html = '<table class="w-full border-collapse border border-slate-400 my-3">';
+        function uploadImage(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const layer = document.getElementById('canvasElementsLayer');
+                const wrap = document.createElement('div');
+                wrap.className = 'draggable-item';
+                wrap.style.left = '80px'; wrap.style.top = '200px';
+                wrap.innerHTML = `
+                    <div class="relative group">
+                        <img src="${evt.target.result}" class="w-28 h-28 object-cover rounded-lg shadow-md">
+                        <button onclick="this.parentElement.parentElement.remove()" class="absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-bold">✕</button>
+                    </div>
+                `;
+                layer.appendChild(wrap);
+                makeElementDraggable(wrap);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // TABLE ENGINE
+        let selectedTable = null;
+
+        document.getElementById('mainEditorArea').addEventListener('click', function(e) {
+            if(e.target.tagName === 'TD' || e.target.tagName === 'TH') {
+                selectedTable = e.target.closest('table');
+            }
+        });
+
+        function createCustomTable() {
+            const rows = prompt("কতগুলো সারি (Rows) চান?", "3");
+            const cols = prompt("কতগুলো কলাম (Columns) চান?", "3");
+            if(!rows || !cols) return;
+
+            let html = '<table class="w-full border-collapse border border-slate-300 my-3">';
             for(let i=0; i<rows; i++) {
                 html += '<tr>';
                 for(let j=0; j<cols; j++) {
-                    html += '<td class="border border-slate-400 p-2 text-sm" contenteditable="true">সেল ডেটা</td>';
+                    html += '<td class="border border-slate-300 p-2 text-sm" contenteditable="true">সেল ডেটা</td>';
                 }
                 html += '</tr>';
             }
@@ -401,102 +433,44 @@
             document.getElementById('mainEditorArea').insertAdjacentHTML('beforeend', html);
         }
 
-        const editorArea = document.getElementById('mainEditorArea');
-        editorArea.addEventListener('input', () => {
-            const text = editorArea.innerText || '';
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            const chars = text.length;
-            document.getElementById('wordCharCounter').innerText = `${words} শব্দ | ${chars} অক্ষর`;
-            autoSave();
-        });
-
-        function autoSave() {
-            const title = document.getElementById('docTitleInput').value;
-            const content = editorArea.innerHTML;
-            localStorage.setItem('docuStudio_autosave', JSON.stringify({ title, content, time: new Date().toLocaleTimeString() }));
-        }
-
-        window.addEventListener('load', () => {
-            const saved = localStorage.getItem('docuStudio_autosave');
-            if(saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    document.getElementById('docTitleInput').value = data.title || 'নতুন নথিপ্রত্র';
-                    editorArea.innerHTML = data.content || editorArea.innerHTML;
-                } catch(e) {}
-            }
-        });
-
-        function newDocument() {
-            if(confirm('নতুন ডকুমেন্ট শুরু করতে চান?')) {
-                document.getElementById('docTitleInput').value = 'নতুন ডকুমেন্ট';
-                editorArea.innerHTML = '<p>এখানে আপনার নতুন লেখা শুরু করুন...</p>';
-                localStorage.removeItem('docuStudio_autosave');
+        function addTableRow() {
+            if(!selectedTable) selectedTable = document.querySelector('#mainEditorArea table');
+            if(!selectedTable) return alert('দয়া করে টেবিলের যেকোনো সেলে ক্লিক করুন');
+            const cols = selectedTable.rows[0].cells.length;
+            const row = selectedTable.insertRow();
+            for(let i=0; i<cols; i++) {
+                const cell = row.insertCell();
+                cell.className = 'border border-slate-300 p-2 text-sm';
+                cell.contentEditable = 'true';
+                cell.innerText = 'নতুন ডেটা';
             }
         }
 
-        function loadTemplate(type) {
-            closeTemplateModal();
-            if(type === 'masnoon') {
-                document.getElementById('docTitleInput').value = 'মাসনূন দোয়া সংকলন';
-                editorArea.innerHTML = `
-                    <h1 class="text-2xl font-bold text-center text-emerald-700">মাসনূন দোয়া ও জিকির</h1>
-                    <p class="text-center text-slate-500 mb-6">দৈনন্দিন জীবনের প্রয়োজনীয় গুরুত্বপূর্ণ দোয়া</p>
-                    <div class="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 my-3">
-                        <h3 class="font-bold text-emerald-800">ঘুম থেকে ওঠার দোয়া</h3>
-                        <p class="font-amiri text-xl text-right my-2" dir="rtl">الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ</p>
-                    </div>
-                `;
-            } else if(type === 'exam') {
-                document.getElementById('docTitleInput').value = 'বার্ষিক পরীক্ষা প্রশ্নপত্র';
-                editorArea.innerHTML = `
-                    <div class="text-center border-b pb-4 mb-4">
-                        <h2 class="font-bold text-lg">মাদরাসা আদর্শ একাডেমি</h2>
-                        <h3 class="font-bold text-md">বার্ষিক পরীক্ষা - ২০২৬</h3>
-                    </div>
-                    <ol class="list-decimal list-inside space-y-2 text-sm">
-                        <li>নিচের কোনটি ইনপুট ডিভাইস নয়? (ক) কিবোর্দ (খ) মাউস (গ) মনিটর (ঘ) স্ক্যানার</li>
-                    </ol>
-                `;
-            } else if(type === 'notice') {
-                document.getElementById('docTitleInput').value = 'অফিশিয়াল জরুরি নোটিশ';
-                editorArea.innerHTML = `
-                    <h3 class="font-bold text-center underline mb-4">জরুরি বিজ্ঞপ্তি</h3>
-                    <p class="text-justify">এতদ্বারা সংশ্লিষ্ট সকলের অবগতির জন্য জানানো যাচ্ছে যে, আগামী শুক্রবার প্রতিষ্ঠানের সভা অনুষ্ঠিত হবে।</p>
-                `;
-            } else if(type === 'routine') {
-                document.getElementById('docTitleInput').value = 'ক্লাস ও পরীক্ষার রুটিন';
-                editorArea.innerHTML = `
-                    <h2 class="font-bold text-center text-lg mb-4">সময়সূচী রুটিন</h2>
-                    <table class="w-full border-collapse border border-slate-400 text-sm">
-                        <tr><th class="border border-slate-400 p-2">বার</th><th class="border border-slate-400 p-2">বিষয়</th></tr>
-                        <tr><td class="border border-slate-400 p-2">শনিবার</td><td class="border border-slate-400 p-2">আরবি ও বাংলা</td></tr>
-                    </table>
-                `;
+        function addTableColumn() {
+            if(!selectedTable) selectedTable = document.querySelector('#mainEditorArea table');
+            if(!selectedTable) return alert('দয়া করে টেবিলের যেকোনো সেলে ক্লিক করুন');
+            for(let i=0; i<selectedTable.rows.length; i++) {
+                const cell = selectedTable.rows[i].insertCell();
+                cell.className = 'border border-slate-300 p-2 text-sm';
+                cell.contentEditable = 'true';
+                cell.innerText = 'নতুন ডেটা';
             }
         }
 
-        function exportProjectJson() {
-            const data = { title: document.getElementById('docTitleInput').value, content: editorArea.innerHTML };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${data.title}.docjson`;
-            a.click();
+        function deleteTableRow() {
+            if(!selectedTable) selectedTable = document.querySelector('#mainEditorArea table');
+            if(!selectedTable || selectedTable.rows.length <= 1) return;
+            selectedTable.deleteRow(-1);
         }
 
-        function importProjectJson(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = JSON.parse(e.target.result);
-                document.getElementById('docTitleInput').value = data.title;
-                editorArea.innerHTML = data.content;
-                alert('প্রজেক্ট লোড হয়েছে!');
-            };
-            reader.readAsText(file);
+        function deleteTableColumn() {
+            if(!selectedTable) selectedTable = document.querySelector('#mainEditorArea table');
+            if(!selectedTable) return;
+            const rows = selectedTable.rows;
+            if(rows[0].cells.length <= 1) return;
+            for(let i=0; i<rows.length; i++) {
+                rows[i].deleteCell(-1);
+            }
         }
 
         function downloadPdf() {
@@ -504,43 +478,6 @@
             const element = document.getElementById('documentCanvas');
             const title = document.getElementById('docTitleInput').value || 'document';
             html2pdf().from(element).set({ margin: 10, filename: `${title}.pdf`, jsPDF: { unit: 'mm', format: 'a4' } }).save();
-        }
-
-        function addCanvasText() {
-            const layer = document.getElementById('canvasElementsLayer');
-            const div = document.createElement('div');
-            div.className = 'canvas-element p-3 bg-white/90 border border-brand-500 rounded-lg shadow-md text-sm font-bold text-slate-800';
-            div.style.left = '30px'; div.style.top = '100px';
-            div.contentEditable = 'true'; div.innerText = 'নতুন টেক্সট বক্স';
-            layer.appendChild(div);
-        }
-
-        function addCanvasShape(shape) {
-            const layer = document.getElementById('canvasElementsLayer');
-            const div = document.createElement('div');
-            div.className = 'canvas-element shadow-md';
-            div.style.left = '50px'; div.style.top = '150px';
-            if(shape === 'rect') {
-                div.style.width = '120px'; div.style.height = '80px'; div.style.backgroundColor = '#e2e8f0'; div.style.border = '2px solid #64748b';
-            } else if(shape === 'circle') {
-                div.style.width = '100px'; div.style.height = '100px'; div.style.backgroundColor = '#fef08a'; div.style.borderRadius = '50%'; div.style.border = '2px solid #ca8a04';
-            }
-            layer.appendChild(div);
-        }
-
-        function uploadImage(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const layer = document.getElementById('canvasElementsLayer');
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'canvas-element w-32 h-32 object-cover rounded-lg shadow-md border-2 border-white';
-                img.style.left = '80px'; img.style.top = '200px';
-                layer.appendChild(img);
-            };
-            reader.readAsDataURL(file);
         }
     </script>
 </body>
