@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DocuStudio Pro - Modern Mobile Document Editor</title>
+    <title>DocuStudio Pro - Masnoon Dua & Canva Editor</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,7 +20,7 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
+    <!-- Google Fonts for Bengali & Arabic (Amiri, Kalpurush, Hind Siliguri) -->
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Kalpurush&family=Scheherazade+New:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
     
     <style>
@@ -115,7 +115,7 @@
             </button>
             <div class="flex flex-col truncate">
                 <div class="flex items-center space-x-1.5">
-                    <input type="text" id="docTitleInput" value="নতুন নথিপ্রত্র" class="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-brand-500 focus:outline-none px-1 truncate w-32 sm:w-48 text-slate-800 dark:text-white">
+                    <input type="text" id="docTitleInput" value="মাসনূন দোয়া ও সুন্নাত সমূহ" class="font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-brand-500 focus:outline-none px-1 truncate w-40 sm:w-56 text-slate-800 dark:text-white">
                     <span id="saveStatusIndicator" class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                 </div>
                 <span class="text-[10px] text-slate-400 px-1" id="wordCharCounter">০ শব্দ | ০ অক্ষর</span>
@@ -133,7 +133,7 @@
             </button>
             <button onclick="triggerPrintPdf()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs rounded-xl flex items-center space-x-1 shadow-sm active:scale-95 transition">
                 <i class="fa-solid fa-file-pdf"></i>
-                <span>PDF তৈরি করুন</span>
+                <span>PDF তৈরি</span>
             </button>
         </div>
     </header>
@@ -222,24 +222,33 @@
         </div>
     </div>
 
-    <!-- MAIN WORKSPACE WORKAREA WITH OPTIMIZED PADDING -->
+    <!-- MAIN WORKSPACE -->
     <main id="workspaceContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center relative focus:outline-none pt-6 sm:pt-8">
         <div id="documentCanvas" class="a4-page p-6 sm:p-12 rounded-xl text-slate-800 transition-all duration-300 shadow-xl my-2">
             
             <div class="text-xs text-slate-400 mb-6 pb-2 border-b border-dashed border-slate-200 flex justify-between items-center" contenteditable="true" spellcheck="false">
-                <span>ডকুমেন্ট হেডার (এখানে লিখুন)</span>
-                <span class="font-semibold">DocuStudio Paper</span>
+                <span>জামেয়া রশীদিয়া, লস্করহাট, ফেনী</span>
+                <span class="font-semibold">মাসনূন দো'আ ও সুন্নাত</span>
             </div>
 
             <div id="mainEditorArea" contenteditable="true" spellcheck="false" class="outline-none min-h-[420px] font-hind text-base leading-relaxed space-y-4 pt-2">
-                <h1 class="text-2xl sm:text-3xl font-bold font-hind text-slate-900 border-b pb-2">বিসমিল্লাহির রহমানির রাহিম</h1>
-                <p class="font-amiri text-2xl text-emerald-700 text-center py-2" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
-                <p>এখানে লিখুন বা ক্যানভা অপশন থেকে শেপ ও বক্স ড্র্যাগ করে বসান। টেবিলের সেলগুলো টান দিয়ে ছোট-বড় করতে পারবেন।</p>
+                <h1 class="text-2xl sm:text-3xl font-bold font-hind text-center text-slate-900 border-b pb-2">الأدعية المسنونة - মাসনূন দো'আ সমূহ</h1>
+                <p class="font-amiri text-2xl text-emerald-700 text-center py-2" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+                
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 my-3">
+                    <h3 class="font-bold text-emerald-800">১. ইস্তেগফার (৩ বার)[span_2](start_span)[span_2](end_span)</h3>
+                    <p class="font-amiri text-xl text-right my-1" dir="rtl">أَسْتَغْفِرُ اللَّهَ</p>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 my-3">
+                    <h3 class="font-bold text-slate-800">নামাজের সুন্নাত সমূহ[span_3](start_span)[span_3](end_span)</h3>
+                    <p class="text-sm mt-1">দাঁড়ানোর মধ্যে ৩টি সুন্নাত: (১) উভয় পায়ের মাঝখানে চার বা ছয় আঙ্গুল পরিমাণ ফাঁক রাখা। (২) সোজা হইয়া দাঁড়ানো। (৩) ইকামতের সময় উভয় হাতকে ছেড়ে দেওয়া[span_4](start_span)[span_4](end_span)。</p>
+                </div>
             </div>
 
             <div class="mt-12 pt-4 border-t border-dashed border-slate-200 flex justify-between items-center text-xs text-slate-400">
                 <span>পৃষ্ঠা ১</span>
-                <span>DocuStudio Pro</span>
+                <span>কপি বিন্যাস: মোহা. সাইফুল ইসলাম তারেক, ফেনী[span_5](start_span)[span_5](end_span)[span_6](start_span)[span_6](end_span)</span>
             </div>
 
             <!-- CANVAS DRAGGABLE LAYER -->
@@ -276,9 +285,35 @@
                 <button onclick="newDocument(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file text-brand-500 w-5"></i> <span>নতুন ডকুমেন্ট</span>
                 </button>
+                <button onclick="openTemplateModal(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
+                    <i class="fa-solid fa-layer-group text-emerald-500 w-5"></i> <span>মাসনূন দোয়া টেমপ্লেট</span>
+                </button>
                 <button onclick="triggerPrintPdf(); closeMenuModal();" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 flex items-center space-x-3 text-sm font-medium">
                     <i class="fa-solid fa-file-pdf text-red-500 w-5"></i> <span>PDF এক্সপোর্ট</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPLATES MODAL -->
+    <div id="templateModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-slate-700">
+                <h3 class="font-bold text-base flex items-center space-x-2">
+                    <i class="fa-solid fa-layer-group text-brand-500"></i>
+                    <span>ইসলামিক টেমপ্লেট নির্বাচন</span>
+                </h3>
+                <button onclick="closeTemplateModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-3">
+                <div onclick="loadMasnoonTemplate()" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
+                    <h4 class="font-bold text-sm text-brand-600">মাসনূন দো'আ ও জিকির সমূহ</h4>
+                    <p class="text-xs text-slate-500 mt-1">ইস্তেগফার, জিকির, দরুদ ও দোয়ার সম্পূর্ণ সংকলন[span_7](start_span)[span_7](end_span)।</p>
+                </div>
+                <div onclick="loadSunnahTemplate()" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 bg-slate-50 dark:bg-slate-700/40 cursor-pointer transition">
+                    <h4 class="font-bold text-sm text-brand-600">নামাজের সুন্নাত সমূহ</h4>
+                    <p class="text-xs text-slate-500 mt-1">দাঁড়ানো, রুকু, সিজদা ও বসার সুন্নাতসমূহ[span_8](start_span)[span_8](end_span)।</p>
+                </div>
             </div>
         </div>
     </div>
@@ -303,6 +338,8 @@
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function openMenuModal() { document.getElementById('menuModal').classList.remove('hidden'); }
         function closeMenuModal() { document.getElementById('menuModal').classList.add('hidden'); }
+        function openTemplateModal() { document.getElementById('templateModal').classList.remove('hidden'); }
+        function closeTemplateModal() { document.getElementById('templateModal').classList.add('hidden'); }
 
         function formatText(cmd) { document.execCommand(cmd, false, null); }
         function applyFontFamily(font) { document.getElementById('mainEditorArea').className = `outline-none min-h-[420px] text-base leading-relaxed space-y-4 pt-2 ${font}`; }
@@ -313,12 +350,12 @@
             ed.style.textAlign = dir === 'rtl' ? 'right' : 'left';
         }
 
-        // DRAGGABLE ENGINE
+        // DRAGGABLE ENGINE (CANVA STYLE)
         let activeElement = null;
 
         function makeElementDraggable(el) {
             el.style.pointerEvents = 'auto';
-            let posX = 0, posY = 0, initialX = 0, initialY = 0;
+            let initialX = 0, initialY = 0;
 
             function dragStart(e) {
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
@@ -368,7 +405,7 @@
             wrap.style.left = '40px'; wrap.style.top = '140px';
             
             wrap.innerHTML = `
-                <div contenteditable="true" class="outline-none px-2 py-1 text-sm font-bold min-w-[80px]">নতুন টেক্সট</div>
+                <div contenteditable="true" class="outline-none px-2 py-1 text-sm font-bold min-w-[80px]">নতুন টেক্সট বক্স</div>
                 <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1 no-print">✕</button>
             `;
             layer.appendChild(wrap);
@@ -382,12 +419,13 @@
             wrap.style.left = '50px'; wrap.style.top = '200px';
             
             if(type === 'rect') {
-                wrap.style.width = '100px'; wrap.style.height = '70px';
-                wrap.style.backgroundColor = '#3b82f6';
+                wrap.style.width = '120px'; wrap.style.height = '80px';
+                wrap.style.backgroundColor = '#dcfce7';
+                wrap.style.border = '1px solid #16a34a';
                 wrap.style.borderRadius = '8px';
             } else if(type === 'circle') {
-                wrap.style.width = '80px'; wrap.style.height = '80px';
-                wrap.style.backgroundColor = '#f59e0b';
+                wrap.style.width = '90px'; wrap.style.height = '90px';
+                wrap.style.backgroundColor = '#fef08a';
                 wrap.style.borderRadius = '50%';
             }
 
@@ -488,7 +526,41 @@
             }
         }
 
-        // PERFECT PDF GENERATION ENGINE
+        // TEMPLATE LOADERS
+        function loadMasnoonTemplate() {
+            closeTemplateModal();
+            document.getElementById('docTitleInput').value = "মাসনূন দো'আ ও জিকির";
+            document.getElementById('mainEditorArea').innerHTML = `
+                <h1 class="text-2xl font-bold text-center text-emerald-800">الأدعية المسنونة - মাসনূন দো'আ সমূহ</h1>
+                <p class="text-center text-slate-500 mb-4">জামেয়া রশীদিয়া, লস্করহাট, ফেনী[span_9](start_span)[span_9](end_span)</p>
+                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 my-2">
+                    <h3 class="font-bold text-emerald-900">১. ইস্তেগফার (৩ বার)[span_10](start_span)[span_10](end_span)</h3>
+                    <p class="font-amiri text-xl text-right my-1" dir="rtl">أَسْتَغْفِرُ اللَّهَ</p>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 my-2">
+                    <h3 class="font-bold text-emerald-900">২. জিকির[span_11](start_span)[span_11](end_span)</h3>
+                    <p class="font-amiri text-xl text-right my-1" dir="rtl">لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ</p>
+                </div>
+            `;
+        }
+
+        function loadSunnahTemplate() {
+            closeTemplateModal();
+            document.getElementById('docTitleInput').value = "নামাজের সুন্নাত সমূহ";
+            document.getElementById('mainEditorArea').innerHTML = `
+                <h1 class="text-2xl font-bold text-center text-blue-800">আমাদের প্রিয় নবী হযরত মুহাম্মদ (সাঃ) এর নামাজের সুন্নাত সমূহ[span_12](start_span)[span_12](end_span)</h1>
+                <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 my-2">
+                    <h3 class="font-bold text-blue-900">দাঁড়ানোর মধ্যে ৩টি সুন্নাত:[span_13](start_span)[span_13](end_span)</h3>
+                    <ul class="list-disc list-inside text-sm space-y-1 mt-1">
+                        <li>উভয় পায়ের মাঝখানে চার বা ছয় আঙ্গুল পরিমাণ ফাঁক রাখা[span_14](start_span)[span_14](end_span)।</li>
+                        <li>সোজা হইয়া দাঁড়ানো[span_15](start_span)[span_15](end_span)।</li>
+                        <li>ইকামতের সময় উভয় হাতকে ছেড়ে দেওয়া[span_16](start_span)[span_16](end_span)।</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // PERFECT PDF PRINT ENGINE
         function triggerPrintPdf() {
             document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
             window.print();
